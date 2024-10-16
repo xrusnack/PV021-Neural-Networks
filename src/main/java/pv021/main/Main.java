@@ -1,13 +1,15 @@
 package pv021.main;
 
-import java.io.IOException;
-
 public class Main {
-    public static void main(String[] args) {
-        try {
-            Data data = new Data("data/fashion_mnist");
-        }catch(IOException e){
-            e.printStackTrace();
-        }
+    public static void main(String[] args) throws Exception {
+        System.out.println("Loading data...");
+        Data data = new Data("data/fashion_mnist");
+
+        System.out.println("Initialising Neural Network...");
+        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data).build(8, new ReLuFunction());
+
+        System.out.println("Training...");
+        // neuralNetwork.train(); TODO
+        // evaluate and save test results
     }
 }
