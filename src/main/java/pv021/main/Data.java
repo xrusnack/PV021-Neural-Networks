@@ -43,6 +43,10 @@ public class Data {
         if(!testVectors.stream().allMatch(integers -> integers.size() == testVectors.get(0).size())){
             throw new IllegalStateException("Test Vectors have inconsistent size!");
         }
+
+        if(testVectors.get(0).size() != trainVectors.get(0).size()){
+            throw new IllegalStateException("Train Vectors have different size than Test vectors!");
+        }
     }
 
     private static List<Vector<Integer>> loadVectors(String path, boolean train) throws IOException {
