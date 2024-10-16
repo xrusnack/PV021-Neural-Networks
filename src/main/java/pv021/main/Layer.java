@@ -1,9 +1,23 @@
 package pv021.main;
 
 public class Layer {
-    private final int n;
-    private final float[] outputs;
-    private final float[] potential;
-    private final float[][] weight;
+    private final double[] outputs;
+    private final double[] potentials;
+    private final double[][] weights;
     private final ActivationFunction activationFunction;
+
+    public Layer(int size, int nextLayerSize, ActivationFunction activationFunction) {
+        this.outputs = new double[size];
+        this.potentials = new double[size];
+        this.activationFunction = activationFunction;
+        this.weights = nextLayerSize > 0 ? new double[size][nextLayerSize] : null;
+    }
+
+    public int getSize(){
+        return outputs.length;
+    }
+
+    public boolean isOutputLayer(){
+        return weights == null;
+    }
 }
