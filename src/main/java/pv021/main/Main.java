@@ -1,4 +1,4 @@
-package org.example;
+package pv021.main;
 
 public class Main {
     public static void main(String[] args) {

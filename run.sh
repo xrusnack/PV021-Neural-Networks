@@ -10,13 +10,13 @@ echo "#################"
 echo "    COMPILING    "
 echo "#################"
 
-## dont forget to use comiler optimizations (e.g. -O3 or -Ofast)
-# g++ -Wall -std=c++17 -O3 src/main.cpp src/file2.cpp -o network
-
+mvn clean install
 
 echo "#################"
 echo "     RUNNING     "
 echo "#################"
+
+nice -n 19 java -cp target/pv021-1.0-SNAPSHOT.jar pv021.main.Main
 
 ## use nice to decrease priority in order to comply with aisa rules
 ## https://www.fi.muni.cz/tech/unix/computation.html.en
