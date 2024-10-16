@@ -1,4 +1,6 @@
-package pv021.main;
+package pv021.network.builder;
+
+import pv021.function.activation.ActivationFunction;
 
 public class LayerTemp {
     private final int size;

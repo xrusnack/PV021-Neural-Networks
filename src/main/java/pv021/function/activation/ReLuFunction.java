@@ -1,6 +1,6 @@
-package pv021.main;
+package pv021.function.activation;
 
-public class ReLuFunction extends ActivationFunction{
+public class ReLuFunction extends ActivationFunction {
 
     @Override
     public float apply(float potential) {

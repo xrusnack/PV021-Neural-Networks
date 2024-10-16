@@ -1,4 +1,6 @@
-package pv021.main;
+package pv021.network;
+
+import pv021.function.activation.ActivationFunction;
 
 public class Layer {
     private final double[] outputs;

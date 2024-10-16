@@ -1,4 +1,9 @@
-package pv021.main;
+package pv021.network.builder;
+
+import pv021.function.activation.ActivationFunction;
+import pv021.function.activation.IdentityFunction;
+import pv021.data.Data;
+import pv021.network.NeuralNetwork;
 
 import java.util.ArrayList;
 import java.util.List;

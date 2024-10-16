@@ -1,4 +1,4 @@
-package pv021.main;
+package pv021.function.activation;
 
 public abstract class ActivationFunction {
     public abstract float apply(float potential);

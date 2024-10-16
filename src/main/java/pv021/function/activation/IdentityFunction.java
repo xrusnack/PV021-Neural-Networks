@@ -1,6 +1,6 @@
-package pv021.main;
+package pv021.function.activation;
 
-public class IdentityFunction extends ActivationFunction{
+public class IdentityFunction extends ActivationFunction {
 
     @Override
     public float apply(float potential) {
