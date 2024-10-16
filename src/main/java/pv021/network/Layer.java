@@ -12,7 +12,9 @@ public class Layer {
         this.outputs = new double[size];
         this.potentials = new double[size];
         this.activationFunction = activationFunction;
-        this.weights = nextLayerSize > 0 ? new double[size][nextLayerSize] : null;
+
+        // size + 1 to include bias
+        this.weights = nextLayerSize > 0 ? new double[size + 1][nextLayerSize] : null;
     }
 
     public int getSize(){
@@ -21,5 +23,13 @@ public class Layer {
 
     public boolean isOutputLayer(){
         return weights == null;
+    }
+
+    public ActivationFunction getActivationFunction() {
+        return activationFunction;
+    }
+
+    public double[] getPotentials() {
+        return potentials;
     }
 }
