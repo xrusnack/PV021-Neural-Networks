@@ -20,34 +20,35 @@ public class Data {
 
     private static List<Vector<Integer>> loadVectors(String path, boolean train) throws IOException {
         String vectorsPath = path + (train ? "_train_vectors.csv" : "_test_vectors.csv");
-        DataInputStream in = new DataInputStream(new FileInputStream(new File(vectorsPath)));
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
-
-        List<Vector<Integer>> result = new ArrayList<>();
-        String line;
-        while ((line = bufferedReader.readLine()) != null) {
-            Vector<Integer> vector = new Vector<>();
-            String[] splittedLine = line.split(",");
-            for (String element : splittedLine) {
-                int elementInt = Integer.parseInt(element);
-                vector.add(elementInt);
+        try(DataInputStream in = new DataInputStream(new FileInputStream(vectorsPath))){
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
+            List<Vector<Integer>> result = new ArrayList<>();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                Vector<Integer> vector = new Vector<>();
+                String[] numbers = line.split(",");
+                for (String element : numbers) {
+                    int elementInt = Integer.parseInt(element);
+                    vector.add(elementInt);
+                }
+                result.add(vector);
             }
-            result.add(vector);
+            return result;
         }
-        return result;
     }
 
     private static List<Integer> loadLabels(String path, boolean train) throws IOException {
         String vectorsPath = path + (train ? "_train_labels.csv" : "_test_labels.csv");
-        DataInputStream in = new DataInputStream(new FileInputStream(new File(vectorsPath)));
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
+        try(DataInputStream in = new DataInputStream(new FileInputStream(vectorsPath))){
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
 
-        List<Integer> result = new ArrayList<>();
-        String line;
-        while ((line = bufferedReader.readLine()) != null) {
-            result.add(Integer.parseInt(line));
+            List<Integer> result = new ArrayList<>();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                result.add(Integer.parseInt(line));
+            }
+            return result;
         }
-        return result;
     }
 
     public List<Vector<Integer>> getTrainVectors() {
