@@ -16,6 +16,33 @@ public class Data {
         this.testVectors = loadVectors(path, false);
         this.testLabels = loadLabels(path, false);
         this.trainLabels = loadLabels(path, true);
+        checkData();
+    }
+
+    private void checkData() {
+        if(trainVectors.isEmpty()){
+            throw new IllegalStateException("Train Vectors are empty!");
+        }
+
+        if(testVectors.isEmpty()){
+            throw new IllegalStateException("Test Vectors are empty!");
+        }
+
+        if(trainVectors.size() != trainLabels.size()){
+            throw new IllegalStateException("Train Vectors size is not equal to Train Labels size!");
+        }
+
+        if(testLabels.size() != testVectors.size()){
+            throw new IllegalStateException("Test Vectors size is not equal to Test Labels size!");
+        }
+
+        if(!trainVectors.stream().allMatch(integers -> integers.size() == trainVectors.get(0).size())){
+            throw new IllegalStateException("Train Vectors have inconsistent size!");
+        }
+
+        if(!testVectors.stream().allMatch(integers -> integers.size() == testVectors.get(0).size())){
+            throw new IllegalStateException("Test Vectors have inconsistent size!");
+        }
     }
 
     private static List<Vector<Integer>> loadVectors(String path, boolean train) throws IOException {
