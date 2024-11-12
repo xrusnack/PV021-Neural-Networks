@@ -3,12 +3,12 @@ package pv021.function.activation;
 public class IdentityFunction extends ActivationFunction {
 
     @Override
-    public float apply(float potential) {
+    public double apply(double potential) {
         return potential;
     }
 
     @Override
-    public float applyDifferentiated(float potential) {
+    public double applyDifferentiated(double potential) {
         return 0;
     }
 }

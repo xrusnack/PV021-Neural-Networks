@@ -8,10 +8,12 @@ import java.util.Vector;
 public class Data {
     private final List<List<Integer>> trainVectors;
     private final List<List<Integer>> testVectors;
-    private final List<Integer> trainLabels;
-    private final List<Integer> testLabels;
+    private final List<List<Integer>> trainLabels;
+    private final List<List<Integer>> testLabels;
+    private final int labelCount;
 
-    public Data(String path) throws IOException {
+    public Data(String path, int labelCount) throws IOException {
+        this.labelCount = labelCount;
         this.trainVectors = loadVectors(path, true);
         this.testVectors = loadVectors(path, false);
         this.testLabels = loadLabels(path, false);
@@ -49,7 +51,11 @@ public class Data {
         }
     }
 
-    private static List<List<Integer>> loadVectors(String path, boolean train) throws IOException {
+    public int getLabelCount() {
+        return labelCount;
+    }
+
+    private List<List<Integer>> loadVectors(String path, boolean train) throws IOException {
         String vectorsPath = path + (train ? "_train_vectors.csv" : "_test_vectors.csv");
         try(DataInputStream in = new DataInputStream(new FileInputStream(vectorsPath))){
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
@@ -68,18 +74,28 @@ public class Data {
         }
     }
 
-    private static List<Integer> loadLabels(String path, boolean train) throws IOException {
+    private List<List<Integer>> loadLabels(String path, boolean train) throws IOException {
         String vectorsPath = path + (train ? "_train_labels.csv" : "_test_labels.csv");
         try(DataInputStream in = new DataInputStream(new FileInputStream(vectorsPath))){
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
 
-            List<Integer> result = new ArrayList<>();
+            List<List<Integer>> result = new ArrayList<>();
             String line;
             while ((line = bufferedReader.readLine()) != null) {
-                result.add(Integer.parseInt(line));
+                int value = Integer.parseInt(line);
+                result.add(oneHotEncode(value, labelCount));
             }
             return result;
         }
+    }
+
+    private List<Integer> oneHotEncode(int value, int labelCount) {
+        List<Integer> result = new ArrayList<>();
+        for(int i = 0; i < labelCount; i++){
+            result.add(i == value ? 1 : 0);
+        }
+
+        return result;
     }
 
     public List<List<Integer>> getTrainVectors() {
@@ -90,11 +106,11 @@ public class Data {
         return testVectors;
     }
 
-    public List<Integer> getTrainLabels() {
+    public List<List<Integer>> getTrainLabels() {
         return trainLabels;
     }
 
-    public List<Integer> getTestLabels() {
+    public List<List<Integer>> getTestLabels() {
         return testLabels;
     }
 }

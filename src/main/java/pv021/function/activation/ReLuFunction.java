@@ -3,12 +3,12 @@ package pv021.function.activation;
 public class ReLuFunction extends ActivationFunction {
 
     @Override
-    public float apply(float potential) {
+    public double apply(double potential) {
         return potential > 0 ? potential : 0;
     }
 
     @Override
-    public float applyDifferentiated(float potential) {
+    public double applyDifferentiated(double potential) {
         return potential > 0 ? 1 : 0;
     }
 }

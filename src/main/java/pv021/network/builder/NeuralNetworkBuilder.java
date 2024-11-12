@@ -25,8 +25,8 @@ public class NeuralNetworkBuilder {
         return this;
     }
 
-    public NeuralNetwork build(int outputSize, ActivationFunction activationFunction) {
-        layers.add(new LayerTemp(outputSize, activationFunction));
+    public NeuralNetwork build(ActivationFunction activationFunction) {
+        layers.add(new LayerTemp(data.getLabelCount(), activationFunction));
         return new NeuralNetwork(data, layers, learningRate, 0);  // TODO
     }
 }

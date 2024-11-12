@@ -38,10 +38,12 @@ public class NeuralNetwork {
 
         for (Layer layer : layers) {
             if (!layer.isOutputLayer()) {
-                for (int i = 0; i < layer.getSize(); i++) {
-                    for (int j = 0; j < layer.getNextLayerSize() + 1; j++) {
-                        layer.getWeights()[i][j] = random.nextGaussian(0, 2.0 / n);
+                for (int j = 0; j < layer.getSize(); j++) {
+                    for (int k = 0; k < layer.getNextLayerSize(); k++) {
+                        layer.getWeights()[j][k] = random.nextGaussian(0, 2.0 / n);
                     }
+
+                    layer.getBiases()[j] = random.nextGaussian(0, 2.0 / n);
                 }
             }
         }
@@ -52,7 +54,30 @@ public class NeuralNetwork {
     }
 
     public void forward(int k) {
+        Layer inputLayer = layers.get(0);
+        for(int i = 0; i < data.getLabelCount(); i++){
+            inputLayer.getOutputs()[i] = data.getTrainLabels().get(k).get(i);
+        }
 
+        for (int l = 1; l < layers.size(); l++) {
+
+            Layer previousLayer = layers.get(l - 1);
+            Layer layer = layers.get(l);
+
+            for(int j = 0; j < layer.getSize(); j++){
+                double potential = layer.getBiases()[j];
+
+                for(int i = 0; i < previousLayer.getSize(); i++) {
+                    potential += previousLayer.getWeights()[j][i] * previousLayer.getOutputs()[i];
+                }
+
+                layer.getPotentials()[j] = potential;
+                layer.getOutputs()[j] = layer.getActivationFunction().apply(potential);
+            }
+
+
+
+        }
     }
 
     public Data getData() {
