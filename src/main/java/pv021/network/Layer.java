@@ -7,7 +7,6 @@ public class Layer {
     private final double[] potentials;
     private final double[] biases;
     private final double[][] weights;
-    private final double[][] weightsUpdate;
     private final ActivationFunction activationFunction;
     private final int nextLayerSize;
 

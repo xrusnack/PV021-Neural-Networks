@@ -19,7 +19,7 @@ public class Main {
         neuralNetwork.initializeWeights();
 
         System.out.println("Training...");
-        neuralNetwork.trainOnline();
+        neuralNetwork.trainBatch();
         // evaluate and save test results
     }
 }
