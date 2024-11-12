@@ -22,3 +22,5 @@ nice -n 19 java -cp target/pv021-1.0-SNAPSHOT.jar pv021.main.Main
 ## https://www.fi.muni.cz/tech/unix/computation.html.en
 ## especially if you are using multiple cores
 # nice -n 19 ./network
+
+python3 evaluator/evaluate.py predictions.csv data/xor_test_labels.csv

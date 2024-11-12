@@ -13,9 +13,7 @@ public class Main {
 
         System.out.println("Initialising Neural Network...");
         NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.1)
-                .addLayer(10, new ReLuFunction())
-                .addLayer(10, new ReLuFunction())
-                .addLayer(10, new ReLuFunction())
+                .addLayer(15, new ReLuFunction())
                 .build(new SoftMaxFunction());
 
         System.out.println("Initialising Neural Weights...");
@@ -25,6 +23,6 @@ public class Main {
         neuralNetwork.trainBatch();
         // evaluate and save test results
 
-        neuralNetwork.evaluate();
+        neuralNetwork.evaluate("predictions.csv");
     }
 }

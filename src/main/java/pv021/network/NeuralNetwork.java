@@ -3,6 +3,9 @@ package pv021.network;
 import pv021.data.Data;
 import pv021.network.builder.LayerTemp;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -151,14 +154,28 @@ public class NeuralNetwork {
         return layers;
     }
 
-    public void evaluate() {
-        for(int k = 0; k < data.getTestLabels().size(); k++) {
-            forward(data.getTestVectors().get(k));
+    public void evaluate(String fileName) throws IOException {
+        File csvOutputFile = new File(fileName);
+        try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
+            for(int k = 0; k < data.getTestLabels().size(); k++) {
+                forward(data.getTestVectors().get(k));
 
-            Layer outputLayer = layers.get(layers.size() - 1);
-            for(int j = 0; j < outputLayer.getSize(); j++) {
-                System.out.printf("Predicted: %f, expected: %d\n", outputLayer.getOutputs()[j], data.getTestLabels().get(k).get(j));
+                Layer outputLayer = layers.get(layers.size() - 1);
+                double max = -Double.MAX_VALUE;
+                int result = 0;
+                for(int j = 0; j < outputLayer.getSize(); j++) {
+                    double predicted = outputLayer.getOutputs()[j];
+                    if(predicted  > max){
+                        max = predicted;
+                        result = j;
+                    }
+                    System.out.printf("Predicted: %f, expected: %d\n", predicted, data.getTestLabels().get(k).get(j));
+                }
+                System.out.printf("\n");
+
+                pw.println(result);
             }
         }
+
     }
 }
