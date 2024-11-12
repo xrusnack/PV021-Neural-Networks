@@ -12,10 +12,12 @@ public class NeuralNetworkBuilder {
     private final List<LayerTemp> layers;
     private final Data data;
     private final double learningRate;
+    private final int steps;
 
-    public NeuralNetworkBuilder(Data data, double learningRate) {
+    public NeuralNetworkBuilder(Data data, double learningRate, int steps) {
         this.layers = new ArrayList<>();
         this.data = data;
+        this.steps=steps;
         this.learningRate = learningRate;
         this.layers.add(new LayerTemp(data.getTestVectors().get(0).size(), new IdentityFunction()));
     }
@@ -27,6 +29,6 @@ public class NeuralNetworkBuilder {
 
     public NeuralNetwork build(ActivationFunction activationFunction) {
         layers.add(new LayerTemp(data.getLabelCount(), activationFunction));
-        return new NeuralNetwork(data, layers, learningRate, 0);  // TODO
+        return new NeuralNetwork(data, layers, learningRate, 0, steps);  // TODO
     }
 }

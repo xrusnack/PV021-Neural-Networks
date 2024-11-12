@@ -16,12 +16,14 @@ public class NeuralNetwork {
     private final List<Layer> layers;
     private final double learningRate;
     private final Random random;
+    private final int steps;
 
-    public NeuralNetwork(Data data, List<LayerTemp> tempLayers, double learningRate, long seed) {
+    public NeuralNetwork(Data data, List<LayerTemp> tempLayers, double learningRate, long seed, int steps) {
         this.data = data;
         this.layers = new ArrayList<>();
         this.learningRate = learningRate;
         this.random = new Random(seed);
+        this.steps=steps;
         initLayers(tempLayers);
     }
 
@@ -41,93 +43,105 @@ public class NeuralNetwork {
 
         for (Layer layer : layers) {
             if (!layer.isOutputLayer()) {
-                for (int j = 0; j < layer.getSize(); j++) {
+                for (int j = 0; j < layer.getSize() + 1; j++) {
                     for (int r = 0; r < layer.getNextLayerSize(); r++) {
-                        layer.getWeights()[r][j] = random.nextGaussian(0, 2.0 / n);
+                        layer.getWeights2()[r][j] = random.nextGaussian(0, 2.0 / n);
                     }
-
-                    layer.getBiases()[j] = random.nextGaussian(0, 2.0 / n);
                 }
             }
         }
     }
 
     public void trainBatch() {
-        for(int t = 0; t < 1000; t++) {
+        int p = data.getTrainVectors().size();
+        for (int t = 0; t < steps; t++) {
 
-            // for each weight
-            for (int l = 1; l < layers.size(); l++) {
-                Layer previousLayer = layers.get(l - 1);
-                Layer layer = layers.get(l);
+            int k = t % p;
+            //for (int k = 0; k < p; k++) {
+                forward(data.getTrainVectors().get(k));
+                backpropagate(k);
+                updateWeightsStep();
+           // }
 
-                for(int j = 0; j < layer.getSize(); j++){
-                    for(int i = 0; i < previousLayer.getSize(); i++) {
-                        previousLayer.getWeights()[j][i] -= learningRate * computeErrorGradient(l, j, i);
-                    }
+            doStep();
+            if(printError()){
+                break;
+            }
+        }
+    }
+
+    private void doStep() {
+        for (int l = 1; l < layers.size(); l++) {
+            Layer previousLayer = layers.get(l - 1);
+            Layer layer = layers.get(l);
+
+            for (int j = 0; j < layer.getSize(); j++) {
+                for (int i = 0; i < previousLayer.getSize() + 1; i++) {
+                    previousLayer.getWeights2()[j][i] += -learningRate * previousLayer.getWeightsStepAccumulator2()[j][i];
+                    previousLayer.getWeightsStepAccumulator2()[j][i] = 0;
                 }
             }
         }
     }
 
-    private double computeErrorGradient(int l, int j, int i) {
-        int p = data.getTrainVectors().size();
-        double result = 0.0;
+    private void updateWeightsStep() {
+        for (int l = 1; l < layers.size(); l++) {
+            Layer previousLayer = layers.get(l - 1);
+            Layer layer = layers.get(l);
 
-        for(int k = 0; k < p; k++) {
-            forward(data.getTrainLabels().get(k));
-            backprop(k);
-            result += computePartialGradient(l, j, i);
+            for (int j = 0; j < layer.getSize(); j++) {
+                for (int i = 0; i < previousLayer.getSize() + 1; i++) {
+                    double step = layer.getChainRuleTermWithOutput2()[j]
+                            * layer.getActivationFunction().applyDifferentiated(layer.getPotentials()[j])
+                            * previousLayer.getOutputs2()[i];
+                    previousLayer.getWeightsStepAccumulator2()[j][i] += step;
+                }
+            }
         }
-
-        return result;
     }
 
-    private double computePartialGradient(int l, int j, int i) {
-        return layers.get(l).getChainRuleTermWithOutput()[j]
-                * layers.get(l).getActivationFunction().applyDifferentiated(layers.get(l).getPotentials()[j])
-                * layers.get(l - 1).getOutputs()[i];
-    }
-
-    private void backprop(int k) {
+    private void backpropagate(int k) {
         Layer outputLayer = layers.get(layers.size() - 1);
-        for (int j = 0; j < data.getLabelCount(); j++) {
-            outputLayer.getChainRuleTermWithOutput()[j] = outputLayer.getOutputs()[j] - data.getTrainLabels().get(k).get(j);
+        for (int j = 0; j < outputLayer.getSize(); j++) {
+            double y = outputLayer.getOutputs2()[j + 1];
+            double d = data.getTrainLabels().get(k).get(j);
+            outputLayer.getChainRuleTermWithOutput2()[j] = -d * Math.log(y) - (1 - d) * Math.log(1 - y);;//y - d;
         }
 
         for (int l = layers.size() - 2; l >= 0; l--) {
             Layer nextLayer = layers.get(l + 1);
             Layer layer = layers.get(l);
 
-            for(int j = 0; j < layer.getSize(); j++) {
+            for (int j = 0; j < layer.getSize() + 1; j++) {
                 double result = 0;
 
-                for(int r = 0; r < nextLayer.getSize(); r++) {
-                    double term1 = nextLayer.getChainRuleTermWithOutput()[r];
+                for (int r = 0; r < nextLayer.getSize(); r++) {
+                    double term1 = nextLayer.getChainRuleTermWithOutput2()[r];
                     double term2 = nextLayer.getActivationFunction().applyDifferentiated(nextLayer.getPotentials()[r]);
-                    double term3 = layer.getWeights()[r][j];
+                    double term3 = layer.getWeights2()[r][j];
                     result = term1 * term2 * term3;
                 }
 
-                layer.getChainRuleTermWithOutput()[j] = result;
+                layer.getChainRuleTermWithOutput2()[j] = result;
             }
         }
     }
 
     public void forward(List<Integer> input) {
         Layer inputLayer = layers.get(0);
-        for(int i = 0; i < data.getLabelCount(); i++){
-            inputLayer.getOutputs()[i] = input.get(i);
+        for (int i = 0; i < data.getLabelCount(); i++) {
+            inputLayer.getOutputs2()[i + 1] = input.get(i);
         }
 
         for (int l = 1; l < layers.size(); l++) {
             Layer previousLayer = layers.get(l - 1);
             Layer layer = layers.get(l);
 
-            for(int j = 0; j < layer.getSize(); j++){  //calculate potentials
-                double potential = layer.getBiases()[j];
+            for (int j = 0; j < layer.getSize(); j++) {  //calculate potentials
+                double potential = 0;
 
-                for(int i = 0; i < previousLayer.getSize(); i++) {
-                    potential += previousLayer.getWeights()[j][i] * previousLayer.getOutputs()[i];
+                for (int i = 0; i < previousLayer.getSize() + 1; i++) {
+                    potential += previousLayer.getWeights2()[j][i] * previousLayer.getOutputs2()[i];
                 }
 
                 layer.getPotentials()[j] = potential;
@@ -135,12 +149,12 @@ public class NeuralNetwork {
 
             double sum = 0;
 
-            for(int j = 0; j < layer.getSize(); j++) {   // sum of activation functions applied to potentials - optimisation
+            for (int j = 0; j < layer.getSize(); j++) {   // sum of activation functions applied to potentials - optimisation
                 sum += layer.getActivationFunction().apply(layer.getPotentials()[j]);
             }
 
-            for(int j = 0; j < layer.getSize(); j++){   // calculate outputs
-                layer.getOutputs()[j] = layer.getActivationFunction().computeOutput(sum, layer.getPotentials()[j]);
+            for (int j = 0; j < layer.getSize(); j++) {   // calculate outputs
+                layer.getOutputs2()[j + 1] = layer.getActivationFunction().computeOutput(sum, layer.getPotentials()[j]);
             }
         }
 
@@ -154,22 +168,41 @@ public class NeuralNetwork {
         return layers;
     }
 
+    private boolean printError() {
+        double error = 0;
+        Layer outputLayer = layers.get(layers.size() - 1);
+        for(int k = 0; k < data.getTestVectors().size(); k++){
+            forward(data.getTestVectors().get(k));
+            for(int j = 0; j < outputLayer.getSize(); j++){
+                double predicted = outputLayer.getOutputs2()[j + 1];
+                double truth = data.getTestLabels().get(k).get(j);
+                error += ((predicted - truth) * (predicted - truth)) / 2.0;
+            }
+        }
+        System.out.println(error);
+
+        return error < 0.15;
+
+    }
+
     public void evaluate(String fileName) throws IOException {
+        System.out.println("==============");
         File csvOutputFile = new File(fileName);
         try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
-            for(int k = 0; k < data.getTestLabels().size(); k++) {
+            for (int k = 0; k < data.getTestVectors().size(); k++) {
                 forward(data.getTestVectors().get(k));
 
                 Layer outputLayer = layers.get(layers.size() - 1);
                 double max = -Double.MAX_VALUE;
                 int result = 0;
-                for(int j = 0; j < outputLayer.getSize(); j++) {
-                    double predicted = outputLayer.getOutputs()[j];
-                    if(predicted  > max){
+                for (int j = 0; j < outputLayer.getSize(); j++) {
+                    double predicted = outputLayer.getOutputs2()[j + 1];
+                    double truth = data.getTestLabels().get(k).get(j);
+                    if (predicted > max) {
                         max = predicted;
                         result = j;
                     }
-                    System.out.printf("Predicted: %f, expected: %d\n", predicted, data.getTestLabels().get(k).get(j));
+                    System.out.printf("Predicted: %f, expected: %f\n", predicted, truth);
                 }
                 System.out.printf("\n");
 
