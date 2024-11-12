@@ -11,10 +11,15 @@ public class Main {
         Data data = new Data("data/fashion_mnist");
 
         System.out.println("Initialising Neural Network...");
-        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data).build(8, new ReLuFunction());
+        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.01)
+                .addLayer(100, new ReLuFunction())
+                .build(8, new ReLuFunction());
+
+        System.out.println("Initialising Neural Weights...");
+        neuralNetwork.initializeWeights();
 
         System.out.println("Training...");
-        // neuralNetwork.train(); TODO
+        neuralNetwork.train();
         // evaluate and save test results
     }
 }

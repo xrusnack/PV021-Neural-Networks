@@ -11,10 +11,12 @@ import java.util.List;
 public class NeuralNetworkBuilder {
     private final List<LayerTemp> layers;
     private final Data data;
+    private final double learningRate;
 
-    public NeuralNetworkBuilder(Data data) {
+    public NeuralNetworkBuilder(Data data, double learningRate) {
         this.layers = new ArrayList<>();
         this.data = data;
+        this.learningRate = learningRate;
         this.layers.add(new LayerTemp(data.getTestVectors().get(0).size(), new IdentityFunction()));
     }
 
@@ -25,6 +27,6 @@ public class NeuralNetworkBuilder {
 
     public NeuralNetwork build(int outputSize, ActivationFunction activationFunction) {
         layers.add(new LayerTemp(outputSize, activationFunction));
-        return new NeuralNetwork(data, layers);  // TODO
+        return new NeuralNetwork(data, layers, learningRate, 0);  // TODO
     }
 }

@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Vector;
 
 public class Data {
-    private final List<Vector<Integer>> trainVectors;
-    private final List<Vector<Integer>> testVectors;
+    private final List<List<Integer>> trainVectors;
+    private final List<List<Integer>> testVectors;
     private final List<Integer> trainLabels;
     private final List<Integer> testLabels;
 
@@ -49,14 +49,14 @@ public class Data {
         }
     }
 
-    private static List<Vector<Integer>> loadVectors(String path, boolean train) throws IOException {
+    private static List<List<Integer>> loadVectors(String path, boolean train) throws IOException {
         String vectorsPath = path + (train ? "_train_vectors.csv" : "_test_vectors.csv");
         try(DataInputStream in = new DataInputStream(new FileInputStream(vectorsPath))){
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
-            List<Vector<Integer>> result = new ArrayList<>();
+            List<List<Integer>> result = new ArrayList<>();
             String line;
             while ((line = bufferedReader.readLine()) != null) {
-                Vector<Integer> vector = new Vector<>();
+                List<Integer> vector = new ArrayList<>();
                 String[] numbers = line.split(",");
                 for (String element : numbers) {
                     int elementInt = Integer.parseInt(element);
@@ -82,11 +82,11 @@ public class Data {
         }
     }
 
-    public List<Vector<Integer>> getTrainVectors() {
+    public List<List<Integer>> getTrainVectors() {
         return trainVectors;
     }
 
-    public List<Vector<Integer>> getTestVectors() {
+    public List<List<Integer>> getTestVectors() {
         return testVectors;
     }
 
