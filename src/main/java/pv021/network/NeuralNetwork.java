@@ -50,7 +50,7 @@ public class NeuralNetwork {
     }
 
     public void trainBatch() {
-        for(int t = 0; t < 100; t++) {
+        for(int t = 0; t < 1000; t++) {
 
             // for each weight
             for (int l = 1; l < layers.size(); l++) {
@@ -71,15 +71,15 @@ public class NeuralNetwork {
         double result = 0.0;
 
         for(int k = 0; k < p; k++) {
-            forward(k);
+            forward(data.getTrainLabels().get(k));
             backprop(k);
-            result += computePartialGradient(l, j, i, k);
+            result += computePartialGradient(l, j, i);
         }
 
         return result;
     }
 
-    private double computePartialGradient(int l, int j, int i, int k) {
+    private double computePartialGradient(int l, int j, int i) {
         return layers.get(l).getChainRuleTermWithOutput()[j]
                 * layers.get(l).getActivationFunction().applyDifferentiated(layers.get(l).getPotentials()[j])
                 * layers.get(l - 1).getOutputs()[i];
@@ -110,17 +110,17 @@ public class NeuralNetwork {
         }
     }
 
-    public void forward(int k) {
+    public void forward(List<Integer> input) {
         Layer inputLayer = layers.get(0);
         for(int i = 0; i < data.getLabelCount(); i++){
-            inputLayer.getOutputs()[i] = data.getTrainLabels().get(k).get(i);
+            inputLayer.getOutputs()[i] = input.get(i);
         }
 
         for (int l = 1; l < layers.size(); l++) {
             Layer previousLayer = layers.get(l - 1);
             Layer layer = layers.get(l);
 
-            for(int j = 0; j < layer.getSize(); j++){
+            for(int j = 0; j < layer.getSize(); j++){  //calculate potentials
                 double potential = layer.getBiases()[j];
 
                 for(int i = 0; i < previousLayer.getSize(); i++) {
@@ -128,7 +128,16 @@ public class NeuralNetwork {
                 }
 
                 layer.getPotentials()[j] = potential;
-                layer.getOutputs()[j] = layer.getActivationFunction().apply(potential);
+            }
+
+            double sum = 0;
+
+            for(int j = 0; j < layer.getSize(); j++) {   // sum of activation functions applied to potentials - optimisation
+                sum += layer.getActivationFunction().apply(layer.getPotentials()[j]);
+            }
+
+            for(int j = 0; j < layer.getSize(); j++){   // calculate outputs
+                layer.getOutputs()[j] = layer.getActivationFunction().computeOutput(sum, layer.getPotentials()[j]);
             }
         }
 
@@ -140,5 +149,16 @@ public class NeuralNetwork {
 
     public List<Layer> getLayers() {
         return layers;
+    }
+
+    public void evaluate() {
+        for(int k = 0; k < data.getTestLabels().size(); k++) {
+            forward(data.getTestVectors().get(k));
+
+            Layer outputLayer = layers.get(layers.size() - 1);
+            for(int j = 0; j < outputLayer.getSize(); j++) {
+                System.out.printf("Predicted: %f, expected: %d\n", outputLayer.getOutputs()[j], data.getTestLabels().get(k).get(j));
+            }
+        }
     }
 }

@@ -1,19 +1,19 @@
 package pv021.function.activation;
 
-public class ReLuFunction extends ActivationFunction {
+public class SoftMaxFunction extends ActivationFunction {
 
     @Override
     public double computeOutput(double sum, double potential) {
-        return apply(potential);
+        return apply(potential) / sum;
     }
 
     @Override
     public double apply(double potential) {
-        return potential > 0 ? potential : 0;
+        return Math.pow(Math.E, potential);
     }
 
     @Override
     public double applyDifferentiated(double potential) {
-        return potential > 0 ? 1 : 0;
+        return Math.pow(Math.E, potential);
     }
 }
