@@ -39,8 +39,8 @@ public class NeuralNetwork {
         for (Layer layer : layers) {
             if (!layer.isOutputLayer()) {
                 for (int j = 0; j < layer.getSize(); j++) {
-                    for (int k = 0; k < layer.getNextLayerSize(); k++) {
-                        layer.getWeights()[j][k] = random.nextGaussian(0, 2.0 / n);
+                    for (int r = 0; r < layer.getNextLayerSize(); r++) {
+                        layer.getWeights()[r][j] = random.nextGaussian(0, 2.0 / n);
                     }
 
                     layer.getBiases()[j] = random.nextGaussian(0, 2.0 / n);
@@ -49,8 +49,65 @@ public class NeuralNetwork {
         }
     }
 
-    public void train() {
+    public void trainBatch() {
+        for(int t = 0; t < 100; t++) {
 
+            // for each weight
+            for (int l = 1; l < layers.size(); l++) {
+                Layer previousLayer = layers.get(l - 1);
+                Layer layer = layers.get(l);
+
+                for(int j = 0; j < layer.getSize(); j++){
+                    for(int i = 0; i < previousLayer.getSize(); i++) {
+                        previousLayer.getWeights()[j][i] -= learningRate * computeErrorGradient(l, j, i);
+                    }
+                }
+            }
+        }
+    }
+
+    private double computeErrorGradient(int l, int j, int i) {
+        int p = data.getTrainVectors().size();
+        double result = 0.0;
+
+        for(int k = 0; k < p; k++) {
+            forward(k);
+            backprop(k);
+            result += computePartialGradient(l, j, i, k);
+        }
+
+        return result;
+    }
+
+    private double computePartialGradient(int l, int j, int i, int k) {
+        return layers.get(l).getChainRuleTermWithOutput()[j]
+                * layers.get(l).getActivationFunction().applyDifferentiated(layers.get(l).getPotentials()[j])
+                * layers.get(l - 1).getOutputs()[i];
+    }
+
+    private void backprop(int k) {
+        Layer outputLayer = layers.get(layers.size() - 1);
+        for (int j = 0; j < data.getLabelCount(); j++) {
+            outputLayer.getChainRuleTermWithOutput()[j] = outputLayer.getOutputs()[j] - data.getTrainLabels().get(k).get(j);
+        }
+
+        for (int l = layers.size() - 2; l >= 0; l--) {
+            Layer nextLayer = layers.get(l + 1);
+            Layer layer = layers.get(l);
+
+            for(int j = 0; j < layer.getSize(); j++) {
+                double result = 0;
+
+                for(int r = 0; r < nextLayer.getSize(); r++) {
+                    double term1 = nextLayer.getChainRuleTermWithOutput()[r];
+                    double term2 = nextLayer.getActivationFunction().applyDifferentiated(nextLayer.getPotentials()[r]);
+                    double term3 = layer.getWeights()[r][j];
+                    result = term1 * term2 * term3;
+                }
+
+                layer.getChainRuleTermWithOutput()[j] = result;
+            }
+        }
     }
 
     public void forward(int k) {
@@ -60,7 +117,6 @@ public class NeuralNetwork {
         }
 
         for (int l = 1; l < layers.size(); l++) {
-
             Layer previousLayer = layers.get(l - 1);
             Layer layer = layers.get(l);
 
@@ -74,10 +130,8 @@ public class NeuralNetwork {
                 layer.getPotentials()[j] = potential;
                 layer.getOutputs()[j] = layer.getActivationFunction().apply(potential);
             }
-
-
-
         }
+
     }
 
     public Data getData() {
