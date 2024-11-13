@@ -13,7 +13,7 @@ public class Main {
         Data data = new Data("data/fashion_mnist", 10);
 
         System.out.println("Initialising Neural Network...");
-        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.0001, 800, System.currentTimeMillis())
+        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.002, 100, System.currentTimeMillis())
                 .addLayer(100, new ReLuFunction())
                 .build(new SoftMaxFunction());
 
