@@ -10,8 +10,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -71,12 +73,15 @@ public class NeuralNetwork {
 
     public void trainBatch() {
         int p = data.getTrainVectors().size();
+        int batchSize = Math.min(p, batchSkip);
         System.err.println("P " + p);
         int t = 0;
+        List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList());
         while (t < steps) {
             //printError();
             //int k = t % p;
-            for (int k = random.nextInt(batchSkip); k < p; k += batchSkip) {
+            Collections.shuffle(batches, new Random());
+            for (int k : batches.subList(0, batchSize)) {
                 forward(data.getTrainVectors().get(k));
                 backpropagate(k);
                 updateWeightsStep();
