@@ -91,19 +91,27 @@ public class NeuralNetwork {
 
     private void doStep() {
         double alpha = momentumAlpha;
+        double ni = learningRate;
+        double delta = 1e-8;
         for (int l = 1; l < layers.size(); l++) {
             Layer previousLayer = layers.get(l - 1);
             Layer layer = layers.get(l);
 
             for (int j = 0; j < layer.getSize(); j++) {
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
-                    double previousStep = previousLayer.getMomentum()[j][i];
-                    double step = -learningRate * previousLayer.getWeightsStepAccumulator()[j][i];
+                    // the big sum
+                    double step = previousLayer.getWeightsStepAccumulator()[j][i];
 
-                    double actualStep = step * (1 - alpha) + previousStep * (alpha);
+                    // r_ji^(t - 1)
+                    double momentum = previousLayer.getMomentum()[j][i];
+
+                    // r_ji^(t)
+                    double currentMomentum = alpha * momentum + (1 - alpha) * step * step;
+
+                    double actualStep = - (ni / Math.sqrt(currentMomentum + delta)) * step;
                     previousLayer.getWeights()[j][i] += actualStep;
                     previousLayer.getWeightsStepAccumulator()[j][i] = 0;
-                    previousLayer.getMomentum()[j][i] = actualStep;
+                    previousLayer.getMomentum()[j][i] = currentMomentum;
                 }
             }
         }
@@ -151,7 +159,7 @@ public class NeuralNetwork {
                 for (int r = 0; r < nextLayer.getSize(); r++) {
                     double term1 = nextLayer.getChainRuleTermWithOutput()[r];
                     double term2 = nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[r]);
-                    double term3 = layer.getWeights()[r][j];
+                    double term3 = layer.getWeights()[r][j + 1];
                     result = term1 * term2 * term3;
                 }
 
