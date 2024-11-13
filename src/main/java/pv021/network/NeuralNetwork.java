@@ -53,7 +53,7 @@ public class NeuralNetwork {
             layers.add(new Layer(
                     layerTemp.getSize(),
                     layerTempNext == null ? 0 : layerTempNext.getSize(),
-                    layerTemp.getActivationFunction()));
+                    layerTemp.getActivationFunction(), i == 0));
         }
     }
 
@@ -78,9 +78,8 @@ public class NeuralNetwork {
         int t = 0;
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList());
         while (t < steps) {
-            //printError();
-            //int k = t % p;
-            Collections.shuffle(batches, new Random());
+            printError();
+            Collections.shuffle(batches, random);
             for (int k : batches.subList(0, batchSize)) {
                 forward(data.getTrainVectors().get(k));
                 backpropagate(k);
@@ -92,85 +91,6 @@ public class NeuralNetwork {
             t++;
         }
         printError();
-    }
-
-    private void doStep() {
-        double alpha = momentumAlpha;
-        double ni = learningRate;
-        double delta = 1e-8;
-        for (int l = 1; l < layers.size(); l++) {
-            Layer previousLayer = layers.get(l - 1);
-            Layer layer = layers.get(l);
-
-            for (int j = 0; j < layer.getSize(); j++) {
-                for (int i = 0; i < previousLayer.getSize() + 1; i++) {
-                    // the big sum
-                    double step = previousLayer.getWeightsStepAccumulator()[j][i];
-
-                    // r_ji^(t - 1)
-                    double momentum = previousLayer.getMomentum()[j][i];
-
-                    // r_ji^(t)
-                    double currentMomentum = alpha * momentum + (1 - alpha) * step * step;
-
-                    double actualStep = - (ni / Math.sqrt(currentMomentum + delta)) * step;
-                    previousLayer.getWeights()[j][i] += actualStep;
-                    previousLayer.getWeightsStepAccumulator()[j][i] = 0;
-                    previousLayer.getMomentum()[j][i] = currentMomentum;
-                }
-            }
-        }
-    }
-
-    private void updateWeightsStep() {
-        for (int l = 1; l < layers.size(); l++) {
-            Layer previousLayer = layers.get(l - 1);
-            Layer layer = layers.get(l);
-
-            double sum = IntStream.range(0, layer.getSize()).mapToDouble(j -> layer.getActivationFunction().apply(layer.getPotentials()[j])).sum();
-
-            IntStream.range(0, layer.getSize()).parallel().forEach(j -> {
-                for (int i = 0; i < previousLayer.getSize() + 1; i++) {
-                    double step = layer.getChainRuleTermWithOutput()[j]
-                            * layer.getActivationFunction().computeDerivative(sum, layer.getPotentials()[j])
-                            * previousLayer.getOutputs()[i];
-                    previousLayer.getWeightsStepAccumulator()[j][i] += step;
-                }
-            });
-        }
-    }
-
-    private void backpropagate(int k) {
-        Layer outputLayer = layers.get(layers.size() - 1);
-        for (int j = 0; j < outputLayer.getSize(); j++) {
-            double y = outputLayer.getOutputs()[j + 1];
-            double d = data.getTrainLabels().get(k).get(j);
-            outputLayer.getChainRuleTermWithOutput()[j] =
-                    -d / y + (1 - d) / (1 - y);//-d * Math.log(y) - (1 - d) * Math.log(1 - y);
-            ;//y - d;
-        }
-
-        for (int l = layers.size() - 2; l >= 0; l--) {
-            Layer nextLayer = layers.get(l + 1);
-            Layer layer = layers.get(l);
-
-            double sum = IntStream.range(0, nextLayer.getSize()).mapToDouble(j -> nextLayer.getActivationFunction().apply(nextLayer.getPotentials()[j])).sum();
-
-            // sum of activation functions applied to potentials - optimisation
-
-            IntStream.range(0, layer.getSize()).parallel().forEach(j -> {
-                double result = 0;
-
-                for (int r = 0; r < nextLayer.getSize(); r++) {
-                    double term1 = nextLayer.getChainRuleTermWithOutput()[r];
-                    double term2 = nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[r]);
-                    double term3 = layer.getWeights()[r][j + 1];
-                    result = term1 * term2 * term3;
-                }
-
-                layer.getChainRuleTermWithOutput()[j] = result;
-            });
-        }
     }
 
     public <T extends Number> void forward(List<T> input) {
@@ -203,23 +123,99 @@ public class NeuralNetwork {
                 layer.getOutputs()[j + 1] = layer.getActivationFunction().computeOutput(sum, layer.getPotentials()[j]);
             }
         }
-
     }
 
-    public Data getData() {
-        return data;
+    private void backpropagate(int k) {
+        Layer outputLayer = layers.get(layers.size() - 1);
+        for (int j = 0; j < outputLayer.getSize(); j++) {
+            double y = outputLayer.getOutputs()[j + 1];
+            double d = data.getTrainLabels().get(k).get(j);
+            outputLayer.getChainRuleTermWithOutput()[j] = -d / y + (1 - d) / (1 - y);
+            //outputLayer.getChainRuleTermWithOutput()[j] = y - d;
+        }
+
+        for (int l = layers.size() - 2; l >= 1; l--) {
+            Layer nextLayer = layers.get(l + 1);
+            Layer layer = layers.get(l);
+
+            double sum = IntStream.range(0, nextLayer.getSize()).mapToDouble(j -> nextLayer.getActivationFunction().apply(nextLayer.getPotentials()[j])).sum();
+
+            // sum of activation functions applied to potentials - optimisation
+
+            IntStream.range(0, layer.getSize()).parallel().forEach(j -> {
+                double result = 0;
+
+                for (int r = 0; r < nextLayer.getSize(); r++) {
+                    double term1 = nextLayer.getChainRuleTermWithOutput()[r];
+                    double term2 = nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[r]);
+                    double term3 = layer.getWeights()[r][j + 1];
+                    result = term1 * term2 * term3;
+                }
+
+                layer.getChainRuleTermWithOutput()[j] = result;
+            });
+        }
     }
 
-    public List<Layer> getLayers() {
-        return layers;
+    private void updateWeightsStep() {
+        for (int l = 1; l < layers.size(); l++) {
+            Layer previousLayer = layers.get(l - 1);
+            Layer layer = layers.get(l);
+
+            double sum = IntStream.range(0, layer.getSize()).mapToDouble(j -> layer.getActivationFunction().apply(layer.getPotentials()[j])).sum();
+
+            IntStream.range(0, layer.getSize()).parallel().forEach(j -> {
+                for (int i = 0; i < previousLayer.getSize() + 1; i++) {
+                    double step = layer.getChainRuleTermWithOutput()[j]
+                            * layer.getActivationFunction().computeDerivative(sum, layer.getPotentials()[j])
+                            * previousLayer.getOutputs()[i];
+                    previousLayer.getWeightsStepAccumulator()[j][i] += step;
+                }
+            });
+        }
     }
+
+    private void doStep() {
+        double alpha = 0.9;
+        double ni = learningRate;
+        double delta = 1e-8;
+        for (int l = 1; l < layers.size(); l++) {
+            Layer previousLayer = layers.get(l - 1);
+            Layer layer = layers.get(l);
+
+            for (int j = 0; j < layer.getSize(); j++) {
+                for (int i = 0; i < previousLayer.getSize() + 1; i++) {
+                    // the big sum
+                    double step = previousLayer.getWeightsStepAccumulator()[j][i];
+
+                    // r_ji^(t - 1)
+                    double rmsProp = previousLayer.getRmsprop()[j][i];
+
+                    // r_ji^(t)
+                    double currentRmsProp = alpha * rmsProp + (1 - alpha) * step * step;
+
+                    double actualStep = - (ni / Math.sqrt(currentRmsProp + delta)) * step;
+                    double previousStep = previousLayer.getMomentum()[j][i];
+
+                    double momentumBalancedStep = actualStep * (1 - momentumAlpha) + momentumAlpha * previousStep;
+
+                    previousLayer.getWeights()[j][i] += momentumBalancedStep;
+                    previousLayer.getWeightsStepAccumulator()[j][i] = 0;
+                    previousLayer.getRmsprop()[j][i] = currentRmsProp;
+                    previousLayer.getMomentum()[j][i] = momentumBalancedStep;
+                }
+            }
+        }
+    }
+
 
     private boolean printError() {
         double error = 0;
         Layer outputLayer = layers.get(layers.size() - 1);
         int total = 0;
         int correct = 0;
-        for (int k = 0; k < data.getTestVectors().size(); k++) {
+        int p = data.getTestVectors().size();
+        for (int k = 0; k < p; k++) {
             forward(data.getTestVectors().get(k));
             double max = -Double.MAX_VALUE;
             int result = 0;
@@ -231,13 +227,15 @@ public class NeuralNetwork {
                     result = j;
                 }
 
-                error += ((predicted - truth) * (predicted - truth)) / 2.0;
+                error += truth * Math.log(predicted);
             }
             total++;
             if (data.getTestLabels().get(k).get(result) == 1) {
                 correct++;
             }
         }
+
+        error *= -1.0/p;
 
         double pct = (correct * 100.0) / total;
 

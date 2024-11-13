@@ -12,23 +12,29 @@ public class Layer {
     private final double[] chainRuleTermWithOutput;
     private final double[][] weightsStepAccumulator;
     private final double[][] momentum;
+    private final double[][] rmsprop;
+    private final int size;
 
-    public Layer(int size, int nextLayerSize, ActivationFunction activationFunction) {
+    public Layer(int size, int nextLayerSize, ActivationFunction activationFunction, boolean input) {
+        this.nextLayerSize = nextLayerSize;
+        this.activationFunction = activationFunction;
+        this.size = size;
+
         this.outputs = new double[size + 1];
         outputs[0] = 1; // bias
-        this.potentials = new double[size];
+        this.potentials = input ? null : new double[size];
+
         this.chainRuleTermWithOutput = new double[size];
-        this.activationFunction = activationFunction;
-        this.nextLayerSize = nextLayerSize;
 
         // TODO! size + 1 to include bias
         this.weightsStepAccumulator = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
         this.momentum = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
         this.weights = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
+        this.rmsprop = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
     }
 
     public int getSize(){
-        return potentials.length;
+        return size;
     }
 
     public int getNextLayerSize() {
@@ -71,5 +77,9 @@ public class Layer {
 
     public double[][] getMomentum() {
         return momentum;
+    }
+
+    public double[][] getRmsprop() {
+        return rmsprop;
     }
 }

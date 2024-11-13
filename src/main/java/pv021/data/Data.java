@@ -3,7 +3,6 @@ package pv021.data;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 public class Data {
     private final List<List<Integer>> trainVectors;
