@@ -15,8 +15,8 @@ public class Main {
         //Data data = new Data("data/xor", 2);
 
         System.out.println("Initialising Neural Network...");
-        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.0001, 500, 10, 0.9, 0)
-                .addLayer(50, new TanHFunction())
+        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.0001, 5000, 10, 0.9, 0)
+                .addLayer(500, new TanHFunction())
                 .build(new SoftMaxFunction());
 
         System.out.println("Initialising Neural Weights...");
