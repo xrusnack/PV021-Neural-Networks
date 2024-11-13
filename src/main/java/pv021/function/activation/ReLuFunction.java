@@ -13,7 +13,7 @@ public class ReLuFunction extends ActivationFunction {
     }
 
     @Override
-    public double applyDifferentiated(double potential) {
+    public double computeDerivative(double sum, double potential) {
         return potential > 0 ? 1 : 0;
     }
 }
