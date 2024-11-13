@@ -16,7 +16,7 @@ import java.util.stream.IntStream;
 
 /**
  * General notes:
- *
+ * <p>
  * j denotes the index of the neuron in the current l-th layer
  * i denotes the index of the neuron in the (l-1)-th layer
  * r denotes the index of the neuron in the (l+1)-th layer
@@ -30,13 +30,17 @@ public class NeuralNetwork {
     private final double learningRate;
     private final Random random;
     private final int steps;
+    private final int batchSkip;
+    private final double momentumAlpha;
 
-    public NeuralNetwork(Data data, List<LayerTemp> tempLayers, double learningRate, long seed, int steps) {
+    public NeuralNetwork(Data data, List<LayerTemp> tempLayers, double learningRate, long seed, int steps, int batchSkip, double momentumAlpha) {
         this.data = data;
         this.layers = new ArrayList<>();
         this.learningRate = learningRate;
         this.random = new Random(seed);
         this.steps = steps;
+        this.batchSkip = batchSkip;
+        this.momentumAlpha = momentumAlpha;
         initLayers(tempLayers);
     }
 
@@ -67,19 +71,18 @@ public class NeuralNetwork {
 
     public void trainBatch() {
         int p = data.getTrainVectors().size();
-        System.err.println("P "+p);
+        System.err.println("P " + p);
         int t = 0;
-        int miniBatch = 100;
         while (t < steps) {
             //printError();
             //int k = t % p;
-            for (int k = random.nextInt(miniBatch); k < p; k += miniBatch) {
+            for (int k = random.nextInt(batchSkip); k < p; k += batchSkip) {
                 forward(data.getTrainVectors().get(k));
                 backpropagate(k);
                 updateWeightsStep();
             }
 
-            System.err.println(t);
+            //System.err.println(t);
             doStep();
             t++;
         }
@@ -87,7 +90,7 @@ public class NeuralNetwork {
     }
 
     private void doStep() {
-        double alpha = 0.9;
+        double alpha = momentumAlpha;
         for (int l = 1; l < layers.size(); l++) {
             Layer previousLayer = layers.get(l - 1);
             Layer layer = layers.get(l);
@@ -130,7 +133,7 @@ public class NeuralNetwork {
             double y = outputLayer.getOutputs()[j + 1];
             double d = data.getTrainLabels().get(k).get(j);
             outputLayer.getChainRuleTermWithOutput()[j] =
-                    -d/y + (1 - d) / (1 - y);//-d * Math.log(y) - (1 - d) * Math.log(1 - y);
+                    -d / y + (1 - d) / (1 - y);//-d * Math.log(y) - (1 - d) * Math.log(1 - y);
             ;//y - d;
         }
 
@@ -148,7 +151,7 @@ public class NeuralNetwork {
                 for (int r = 0; r < nextLayer.getSize(); r++) {
                     double term1 = nextLayer.getChainRuleTermWithOutput()[r];
                     double term2 = nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[r]);
-                    double term3 = layer.getWeights()[r][j + 1];
+                    double term3 = layer.getWeights()[r][j];
                     result = term1 * term2 * term3;
                 }
 
@@ -201,15 +204,31 @@ public class NeuralNetwork {
     private boolean printError() {
         double error = 0;
         Layer outputLayer = layers.get(layers.size() - 1);
+        int total = 0;
+        int correct = 0;
         for (int k = 0; k < data.getTestVectors().size(); k++) {
             forward(data.getTestVectors().get(k));
+            double max = -Double.MAX_VALUE;
+            int result = 0;
             for (int j = 0; j < outputLayer.getSize(); j++) {
                 double predicted = outputLayer.getOutputs()[j + 1];
-                double truth = data.getTestLabels().get(k).get(j);
+                int truth = data.getTestLabels().get(k).get(j);
+                if (predicted > max) {
+                    max = predicted;
+                    result = j;
+                }
+
                 error += ((predicted - truth) * (predicted - truth)) / 2.0;
             }
+            total++;
+            if (data.getTestLabels().get(k).get(result) == 1) {
+                correct++;
+            }
         }
-        System.out.println(error);
+
+        double pct = (correct * 100.0) / total;
+
+        System.out.println(error + " / %f".formatted(pct));
 
         return error < 0.01;
 
@@ -234,7 +253,7 @@ public class NeuralNetwork {
                     }
                     // System.out.printf("Predicted: %f, expected: %f\n", predicted, truth);
                 }
-               // System.out.printf("\n");
+                // System.out.printf("\n");
 
                 pw.println(result);
             }

@@ -4,6 +4,7 @@ import pv021.data.Data;
 import pv021.function.activation.ReLuFunction;
 import pv021.function.activation.SigmoidFunction;
 import pv021.function.activation.SoftMaxFunction;
+import pv021.function.activation.TanHFunction;
 import pv021.network.NeuralNetwork;
 import pv021.network.builder.NeuralNetworkBuilder;
 
@@ -11,10 +12,11 @@ public class Main {
     public static void main(String[] args) throws Exception {
         System.out.println("Loading data...");
         Data data = new Data("data/fashion_mnist", 10);
+        //Data data = new Data("data/xor", 2);
 
         System.out.println("Initialising Neural Network...");
-        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.002, 100, System.currentTimeMillis())
-                .addLayer(100, new ReLuFunction())
+        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.001, 10000, 15000, 0.9, 0)
+                .addLayer(20, new TanHFunction())
                 .build(new SoftMaxFunction());
 
         System.out.println("Initialising Neural Weights...");

@@ -14,12 +14,16 @@ public class NeuralNetworkBuilder {
     private final double learningRate;
     private final int steps;
     private final long seed;
+    private final int batchSkip;
+    private final double momentumAlpha;
 
-    public NeuralNetworkBuilder(Data data, double learningRate, int steps, long seed) {
+    public NeuralNetworkBuilder(Data data, double learningRate, int steps, int batchSkip, double momentumAlpha, long seed) {
         this.layers = new ArrayList<>();
         this.data = data;
-        this.steps=steps;
+        this.steps = steps;
         this.learningRate = learningRate;
+        this.batchSkip = batchSkip;
+        this.momentumAlpha = momentumAlpha;
         this.layers.add(new LayerTemp(data.getTestVectors().get(0).size(), new IdentityFunction()));
         this.seed = seed;
     }
@@ -31,6 +35,6 @@ public class NeuralNetworkBuilder {
 
     public NeuralNetwork build(ActivationFunction activationFunction) {
         layers.add(new LayerTemp(data.getLabelCount(), activationFunction));
-        return new NeuralNetwork(data, layers, learningRate, seed, steps);
+        return new NeuralNetwork(data, layers, learningRate, seed, steps, batchSkip, momentumAlpha);
     }
 }
