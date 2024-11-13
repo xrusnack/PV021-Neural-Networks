@@ -10,11 +10,11 @@ import pv021.network.builder.NeuralNetworkBuilder;
 public class Main {
     public static void main(String[] args) throws Exception {
         System.out.println("Loading data...");
-        Data data = new Data("data/xor", 2);
+        Data data = new Data("data/fashion_mnist", 10);
 
         System.out.println("Initialising Neural Network...");
-        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.05, 200000)
-                .addLayer(10, new ReLuFunction())
+        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.05, 100, 8)
+                .addLayer(500, new ReLuFunction())
                 .build(new SoftMaxFunction());
 
         System.out.println("Initialising Neural Weights...");
@@ -25,5 +25,8 @@ public class Main {
         // evaluate and save test results
 
         neuralNetwork.evaluate("predictions.csv");
+
+        // XOR only
+        //neuralNetwork.drawDistribution();
     }
 }

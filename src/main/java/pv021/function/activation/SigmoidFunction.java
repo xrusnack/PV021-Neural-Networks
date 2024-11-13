@@ -13,7 +13,7 @@ public class SigmoidFunction extends ActivationFunction {
     }
 
     @Override
-    public double applyDifferentiated(double potential) {
+    public double computeDerivative(double sum, double potential) {
         return (apply(potential) - 1) / (apply(potential));
     }
 }

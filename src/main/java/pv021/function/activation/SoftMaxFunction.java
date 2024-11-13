@@ -13,7 +13,8 @@ public class SoftMaxFunction extends ActivationFunction {
     }
 
     @Override
-    public double applyDifferentiated(double potential) {
-        return Math.pow(Math.E, potential);
+    public double computeDerivative(double sum, double potential) {
+        double x = computeOutput(sum, potential);
+        return x * (1 - x);
     }
 }

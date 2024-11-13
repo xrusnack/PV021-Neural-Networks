@@ -13,7 +13,7 @@ public class IdentityFunction extends ActivationFunction {
     }
 
     @Override
-    public double applyDifferentiated(double potential) {
+    public double computeDerivative(double sum, double potential) {
         return 0;
     }
 }
