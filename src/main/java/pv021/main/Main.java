@@ -13,8 +13,8 @@ public class Main {
         Data data = new Data("data/fashion_mnist", 10);
 
         System.out.println("Initialising Neural Network...");
-        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.05, 100, 8)
-                .addLayer(500, new ReLuFunction())
+        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.0001, 800, System.currentTimeMillis())
+                .addLayer(100, new ReLuFunction())
                 .build(new SoftMaxFunction());
 
         System.out.println("Initialising Neural Weights...");
@@ -27,6 +27,6 @@ public class Main {
         neuralNetwork.evaluate("predictions.csv");
 
         // XOR only
-        //neuralNetwork.drawDistribution();
+       // neuralNetwork.drawDistribution();
     }
 }

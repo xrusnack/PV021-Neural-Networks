@@ -11,17 +11,19 @@ public class Layer {
 
     private final double[] chainRuleTermWithOutput;
     private final double[][] weightsStepAccumulator;
+    private final double[][] momentum;
 
     public Layer(int size, int nextLayerSize, ActivationFunction activationFunction) {
         this.outputs = new double[size + 1];
         outputs[0] = 1; // bias
         this.potentials = new double[size];
-        this.chainRuleTermWithOutput = new double[size + 1];
+        this.chainRuleTermWithOutput = new double[size];
         this.activationFunction = activationFunction;
         this.nextLayerSize = nextLayerSize;
 
         // TODO! size + 1 to include bias
         this.weightsStepAccumulator = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
+        this.momentum = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
         this.weights = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
     }
 
@@ -45,19 +47,19 @@ public class Layer {
         return potentials;
     }
 
-    public double[] getOutputs2() {
+    public double[] getOutputs() {
         return outputs;
     }
 
-    public double[][] getWeights2() {
+    public double[][] getWeights() {
         return weights;
     }
 
-    public double[][] getWeightsStepAccumulator2() {
+    public double[][] getWeightsStepAccumulator() {
         return weightsStepAccumulator;
     }
 
-    public double[] getChainRuleTermWithOutput2() {
+    public double[] getChainRuleTermWithOutput() {
         return chainRuleTermWithOutput;
     }
 
@@ -65,5 +67,9 @@ public class Layer {
         double[][] tst = new double[4][4];
         tst[0][3] = 3;
         System.err.println(tst[0][3]);
+    }
+
+    public double[][] getMomentum() {
+        return momentum;
     }
 }
