@@ -10,6 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * General notes:
+ *
+ * j denotes the index of the neuron in the current l-th layer
+ * i denotes the index of the neuron in the (l-1)-th layer
+ * r denotes the index of the neuron in the (l+1)-th layer
+ * w_ji denotes the weight of the connection from neuron i (in the (l-1)-th layer) to neuron j (in the l-th layer)
+ */
+
 public class NeuralNetwork {
 
     private final Data data;
