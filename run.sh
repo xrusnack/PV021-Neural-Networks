@@ -10,7 +10,7 @@ echo "#################"
 echo "    COMPILING    "
 echo "#################"
 
-mvn clean install
+mvn clean package
 
 echo "#################"
 echo "     RUNNING     "
