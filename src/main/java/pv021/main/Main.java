@@ -12,7 +12,7 @@ public class Main {
         Data data = new Data("data/fashion_mnist", 10);
 
         System.out.println("Initialising Neural Network...");
-        long startTime = System.nanoTime();
+
         NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data,
                 0.00002,
                 8*60*1000,
@@ -27,16 +27,10 @@ public class Main {
                 .build(new SoftMaxFunction());
 
         System.out.println("Training...");
-        neuralNetwork.SGD();
+        neuralNetwork.stochasticGradientDescent();
         // evaluate and save test results
 
         neuralNetwork.evaluate("predictions.csv");
-
-        long endTime = System.nanoTime();
-        long durationMillis = (endTime - startTime) / 1000000;
-        long minutes = (durationMillis / 1000) / 60;
-        long seconds = (durationMillis / 1000) % 60;
-        System.out.printf("Execution Time: %d minutes and %d seconds\n", minutes, seconds);
 
         // XOR only
         //neuralNetwork.drawDistribution();
