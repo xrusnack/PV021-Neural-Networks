@@ -44,4 +44,5 @@ public class NeuralNetworkBuilder {
         layers.add(new LayerTemp(data.getLabelCount(), activationFunction));
         return new NeuralNetwork(data, layers, learningRate, seed, steps, batchSkip, momentumAlpha, debug, rmsAlpha, decay);
     }
+
 }

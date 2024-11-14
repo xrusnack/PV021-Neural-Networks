@@ -94,8 +94,8 @@ public class NeuralNetwork {
                 updateWeightsStep();
             }
 
-            System.err.println(t+" | max = %f".formatted(Arrays.stream(layers.get(layers.size()-1).getPotentials()).max().orElse(0)));
             doStep();
+            System.err.println(t+" | max = %f".formatted(Arrays.stream(layers.get(layers.size()-1).getPotentials()).max().orElse(0)));
             t++;
         }
         printError();
@@ -161,6 +161,7 @@ public class NeuralNetwork {
                     double term1 = nextLayer.getChainRuleTermWithOutput()[r];
                     double term2 = nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[r], max);
                     double term3 = layer.getWeights()[r][j + 1];
+
                     result += term1 * term2 * term3;
                 }
 

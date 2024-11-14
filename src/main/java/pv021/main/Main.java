@@ -17,13 +17,13 @@ public class Main {
 
         System.out.println("Initialising Neural Network...");
         NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data,
-                0.00001,
-                200,
-                256,
-                0.9,
-                0.9,
+                0.01,
+                1000,
+                4,
+                0.825,
+                0.825,
                 42,
-                0.0001,
+                0.0005,
                 false)
                 .addLayer(8096, new ReLuFunction())
                 .build(new SoftMaxFunction());
