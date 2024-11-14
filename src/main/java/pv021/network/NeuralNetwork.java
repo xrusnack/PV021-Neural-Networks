@@ -132,8 +132,8 @@ public class NeuralNetwork {
             double y = outputLayer.getOutputs()[j + 1];
             double d = data.getTrainLabels().get(k).get(j);
 
-            outputLayer.getChainRuleTermWithOutput()[j] = -d / y + (1 - d) / (1 - y);
-            //outputLayer.getChainRuleTermWithOutput()[j] = y - d;
+            //outputLayer.getChainRuleTermWithOutput()[j] = -d / y + (1 - d) / (1 - y);
+            outputLayer.getChainRuleTermWithOutput()[j] = y - d;
         }
 
         for (int l = layers.size() - 2; l >= 1; l--) {
