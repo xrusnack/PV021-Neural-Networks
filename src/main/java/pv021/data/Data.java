@@ -9,16 +9,16 @@ import java.util.List;
  */
 
 public class Data {
-    private final List<List<Integer>> trainVectors;
-    private final List<List<Integer>> testVectors;
+    private final List<List<Double>> trainVectors;
+    private final List<List<Double>> testVectors;
     private final List<List<Integer>> trainLabels;
     private final List<List<Integer>> testLabels;
     private final int labelCount;
 
     public Data(String path, int labelCount) throws IOException {
         this.labelCount = labelCount;
-        this.trainVectors = loadVectors(path, true);
-        this.testVectors = loadVectors(path, false);
+        this.trainVectors = normalizeVectors(loadVectors(path, true));
+        this.testVectors = normalizeVectors(loadVectors(path, false));
         this.testLabels = loadLabels(path, false);
         this.trainLabels = loadLabels(path, true);
         checkData();
@@ -80,6 +80,40 @@ public class Data {
         }
     }
 
+    private List<List<Double>> normalizeVectors(List<List<Integer>> vectors) {
+        double mean = calculateMean(vectors);
+        double std  = calculateStandardDeviation(vectors, mean);
+
+        List<List<Double>> normalizedVectors = new ArrayList<>();
+
+        for (List<Integer> vector : vectors) {
+            List<Double> normalizedVector = new ArrayList<>();
+            for (int value : vector) {
+                normalizedVector.add((value - mean) / std);
+            }
+            normalizedVectors.add(normalizedVector);
+        }
+        return normalizedVectors;
+    }
+
+    private double calculateMean(List<List<Integer>> vectors) {
+        return vectors.stream()
+                .flatMapToInt(list -> list.stream().mapToInt(Integer::intValue))
+                .average()
+                .orElse(0.0);
+    }
+
+    private double calculateStandardDeviation(List<List<Integer>> vectors, double mean) {
+        long count = vectors.stream().mapToLong(List::size).sum();
+
+        double sumOfSquares = vectors.stream()
+                .flatMapToInt(list -> list.stream().mapToInt(Integer::intValue))
+                .mapToDouble(value -> Math.pow(value - mean, 2))
+                .sum();
+
+        return Math.sqrt(sumOfSquares / (count - 1));
+    }
+
     private List<List<Integer>> loadLabels(String path, boolean train) throws IOException {
         String vectorsPath = path + (train ? "_train_labels.csv" : "_test_labels.csv");
         try(DataInputStream in = new DataInputStream(new FileInputStream(vectorsPath))){
@@ -104,11 +138,11 @@ public class Data {
         return result;
     }
 
-    public List<List<Integer>> getTrainVectors() {
+    public List<List<Double>> getTrainVectors() {
         return trainVectors;
     }
 
-    public List<List<Integer>> getTestVectors() {
+    public List<List<Double>> getTestVectors() {
         return testVectors;
     }
 
