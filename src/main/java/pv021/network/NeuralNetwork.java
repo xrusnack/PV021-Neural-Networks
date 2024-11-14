@@ -6,7 +6,7 @@ import pv021.function.error.ErrorFunction;
 import pv021.network.builder.LayerTemp;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -96,7 +96,7 @@ public class NeuralNetwork {
                 backpropagate(k, new CrossEntropy());
                 computeGradient();
             }
-            updateWeights();  // add momentum and RMSProp
+            updateWeights();
             //System.err.println(t + " | max = %f min = %f".formatted(
             //        Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0),
             //        Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));
