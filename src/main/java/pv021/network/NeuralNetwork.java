@@ -249,7 +249,7 @@ public class NeuralNetwork {
                     result = j;
                 }
 
-                error += truth * Math.log(predicted);
+                error += truth * Math.log(predicted) + (1 - truth) * Math.log(1 - predicted);
             }
             total++;
             if (data.getTestLabels().get(k).get(result) == 1) {
