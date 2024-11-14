@@ -186,6 +186,7 @@ public class NeuralNetwork {
     private void doStep() {
         double alpha = 0.9;
         double ni = learningRate;
+        double decay = 0.01;
         double delta = 1e-8;
         for (int l = 1; l < layers.size(); l++) {
             Layer previousLayer = layers.get(l - 1);
@@ -207,7 +208,7 @@ public class NeuralNetwork {
 
                     double momentumBalancedStep = actualStep * (1 - momentumAlpha) + momentumAlpha * previousStep;
 
-
+                    previousLayer.getWeights()[j][i] *= (1 - decay);
                     previousLayer.getWeights()[j][i] += momentumBalancedStep;
                     previousLayer.getWeightsStepAccumulator()[j][i] = 0;
                     previousLayer.getRmsprop()[j][i] = currentRmsProp;
