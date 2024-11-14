@@ -84,7 +84,7 @@ public class NeuralNetwork {
         int t = 0;
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList());
         while (t < steps) {
-            if (debug  || t % 1000 == 0) {
+            if (debug || t % 1000 == 0) {
                 printError();
             }
             Collections.shuffle(batches, random);
@@ -95,8 +95,8 @@ public class NeuralNetwork {
             }
 
             doStep();
-            System.err.println(t + " | max = %f min = %f".formatted(Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0)
-                    , Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));
+            //System.err.println(t + " | max = %f min = %f".formatted(Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0)
+            //        , Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));
             t++;
         }
         printError();
@@ -244,7 +244,7 @@ public class NeuralNetwork {
                     result = j;
                 }
 
-                error += truth * Math.log(predicted);
+                error += truth * Math.log(predicted) + (1 - truth) * Math.log(1 - predicted);
             }
             total++;
             if (data.getTestLabels().get(k).get(result) == 1) {
