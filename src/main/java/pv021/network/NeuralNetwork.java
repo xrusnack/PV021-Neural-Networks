@@ -172,10 +172,11 @@ public class NeuralNetwork {
             double sum = IntStream.range(0, layer.getSize()).mapToDouble(j -> layer.getActivationFunction().apply(layer.getPotentials()[j], max)).sum();
 
             IntStream.range(0, layer.getSize()).parallel().forEach(j -> {
+                double term1 = layer.getChainRuleTermWithOutput()[j];
+                double term2 = layer.getActivationFunction().computeDerivative(sum, layer.getPotentials()[j], max);
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
-                    double step = layer.getChainRuleTermWithOutput()[j]
-                            * layer.getActivationFunction().computeDerivative(sum, layer.getPotentials()[j], max)
-                            * previousLayer.getOutputs()[i];
+                    double term3 = previousLayer.getOutputs()[i];;
+                    double step = term1 * term2 * term3;
                     previousLayer.getWeightsStepAccumulator()[j][i] += step;
                 }
             });
