@@ -70,7 +70,7 @@ public class NeuralNetwork {
             if (!layer.isOutputLayer()) {
                 for (int j = 0; j < layer.getSize() + 1; j++) {
                     for (int r = 0; r < layer.getNextLayerSize(); r++) {
-                        layer.getWeights()[r][j] = random.nextGaussian(0, 2.0 / n);
+                        layer.getWeights()[r][j] = j == 0 ? 2.0 / n : random.nextGaussian(0, 2.0 / n);
                     }
                 }
             }
