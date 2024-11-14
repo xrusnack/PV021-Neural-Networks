@@ -1,6 +1,8 @@
 package pv021.network;
 
 import pv021.data.Data;
+import pv021.function.error.CrossEntropy;
+import pv021.function.error.ErrorFunction;
 import pv021.network.builder.LayerTemp;
 
 import javax.imageio.ImageIO;
@@ -15,8 +17,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * General notes:
+ * The class representing the neural network.
  * <p>
+ * General notes:
  * j denotes the index of the neuron in the current l-th layer
  * i denotes the index of the neuron in the (l-1)-th layer
  * r denotes the index of the neuron in the (l+1)-th layer
@@ -61,6 +64,7 @@ public class NeuralNetwork {
                     layerTempNext == null ? 0 : layerTempNext.getSize(),
                     layerTemp.getActivationFunction(), i == 0));
         }
+        initializeWeights();  // we use the Normal He-initialization
     }
 
     public void initializeWeights() {
@@ -70,131 +74,132 @@ public class NeuralNetwork {
             if (!layer.isOutputLayer()) {
                 for (int j = 0; j < layer.getSize() + 1; j++) {
                     for (int r = 0; r < layer.getNextLayerSize(); r++) {
-                        layer.getWeights()[r][j] = j == 0 ? 2.0 / n : random.nextGaussian(0, 2.0 / n);
+                        layer.getWeights()[r][j] = j == 0 ? 0 : random.nextGaussian(0, 2.0 / n);
                     }
                 }
             }
         }
     }
 
-    public void trainBatch() {
-        int p = data.getTrainVectors().size();
+    public void SGD() {
+        int p = data.getTrainVectors().size();  // number of training examples
         int batchSize = Math.min(p, batch);
-        System.err.println("P " + p);
-        int t = 0;
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList());
-        while (t < steps) {
-            if (debug || t % 1000 == 0) {
+
+        for (int t = 0; t < steps; t++) {
+            if (debug  || t % 500 == 0) {
                 printError();
             }
-            Collections.shuffle(batches, random);
+            Collections.shuffle(batches, random);  // choose a minibatch
             for (int k : batches.subList(0, batchSize)) {
                 forward(data.getTrainVectors().get(k));
-                backpropagate(k);
-                updateWeightsStep();
+                backpropagate(k, new CrossEntropy());
+                computeGradient();
             }
-
-            doStep();
-            //System.err.println(t + " | max = %f min = %f".formatted(Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0)
-            //        , Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));
-            t++;
+            updateWeights();  // add momentum and RMSProp
+            System.err.println(t + " | max = %f min = %f".formatted(
+                    Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0),
+                    Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));
         }
         printError();
     }
 
     public <T extends Number> void forward(List<T> input) {
         Layer inputLayer = layers.get(0);
-        for (int i = 0; i < inputLayer.getSize(); i++) {
+
+        for (int i = 0; i < inputLayer.getSize(); i++) {  // start the forward pass by evaluating the input neurons
             String str = input.get(i).toString();
             inputLayer.getOutputs()[i + 1] = Double.parseDouble(str);
         }
 
-        for (int l = 1; l < layers.size(); l++) {
+        for (int l = 1; l < layers.size(); l++) {  // forward pass in the hidden layers
             Layer previousLayer = layers.get(l - 1);
             Layer layer = layers.get(l);
 
-            IntStream.range(0, layer.getSize()).parallel().forEach(j -> {  //calculate potentials
+            IntStream.range(0, layer.getSize()).parallel().forEach(j -> {  // calculate potentials
                 double potential = 0;
 
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
                     potential += previousLayer.getWeights()[j][i] * previousLayer.getOutputs()[i];
                 }
-
                 layer.getPotentials()[j] = potential;
             });
 
             double max = Arrays.stream(layer.getPotentials()).max().orElse(0);
-            double sum = 0;
 
-            for (int j = 0; j < layer.getSize(); j++) {   // sum of activation functions applied to potentials - optimisation
+            // calculate sum of activation functions applied to potentials (for the output layer with softmax) - optimisation
+            double sum = 0;
+            for (int j = 0; j < layer.getSize(); j++) {
                 sum += layer.getActivationFunction().apply(layer.getPotentials()[j], max);
             }
 
-            for (int j = 0; j < layer.getSize(); j++) {   // calculate outputs
-                layer.getOutputs()[j + 1] = layer.getActivationFunction().computeOutput(sum, layer.getPotentials()[j], max);
+            // calculate outputs for each neuron in the layer
+            for (int j = 0; j < layer.getSize(); j++) {
+                layer.getOutputs()[j + 1] = layer.getActivationFunction()
+                        .computeOutput(sum, layer.getPotentials()[j], max);
             }
         }
     }
 
-    private void backpropagate(int k) {
+    private void backpropagate(int k, ErrorFunction errorFunction) {
         Layer outputLayer = layers.get(layers.size() - 1);
-        for (int j = 0; j < outputLayer.getSize(); j++) {
+        for (int j = 0; j < outputLayer.getSize(); j++) {  // start with the output layer
             double y = outputLayer.getOutputs()[j + 1];
             double d = data.getTrainLabels().get(k).get(j);
 
-            outputLayer.getChainRuleTermWithOutput()[j] = -d / y + (1 - d) / (1 - y);
-            //outputLayer.getChainRuleTermWithOutput()[j] = y - d;
+            // compute the partial derivative of the errorFunction with respect to the outputs
+            outputLayer.getChainRuleTermWithOutput()[j] = errorFunction.calculatePartialDerivative(y, d);
         }
 
+        // compute the partial derivative of the errorFunction with respect to the outputs in the hidden layers
         for (int l = layers.size() - 2; l >= 1; l--) {
             Layer nextLayer = layers.get(l + 1);
             Layer layer = layers.get(l);
 
             double max = Arrays.stream(nextLayer.getPotentials()).max().orElse(0);
-            double sum = IntStream.range(0, nextLayer.getSize()).mapToDouble(j -> nextLayer.getActivationFunction().apply(nextLayer.getPotentials()[j], max)).sum();
+            double sum = IntStream.range(0, nextLayer.getSize()).mapToDouble(j ->
+                    nextLayer.getActivationFunction().apply(nextLayer.getPotentials()[j], max)).sum();
 
             // sum of activation functions applied to potentials - optimisation
-
             IntStream.range(0, layer.getSize()).parallel().forEach(j -> {
                 double result = 0;
 
                 for (int r = 0; r < nextLayer.getSize(); r++) {
-                    double term1 = nextLayer.getChainRuleTermWithOutput()[r];
-                    double term2 = nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[r], max);
-                    double term3 = layer.getWeights()[r][j + 1];
-
-
-                    result += term1 * term2 * term3;
+                    result += nextLayer.getChainRuleTermWithOutput()[r]
+                            * nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[r], max)
+                            * layer.getWeights()[r][j + 1];
                 }
-
                 layer.getChainRuleTermWithOutput()[j] = result;
             });
         }
     }
 
-    private void updateWeightsStep() {
+    private void computeGradient() {
         for (int l = 1; l < layers.size(); l++) {
             Layer previousLayer = layers.get(l - 1);
             Layer layer = layers.get(l);
 
             double max = Arrays.stream(layer.getPotentials()).max().orElse(0);
-            double sum = IntStream.range(0, layer.getSize()).mapToDouble(j -> layer.getActivationFunction().apply(layer.getPotentials()[j], max)).sum();
+            double sum = IntStream.range(0, layer.getSize()).mapToDouble(j ->
+                    layer.getActivationFunction().apply(layer.getPotentials()[j], max)).sum();
 
             IntStream.range(0, layer.getSize()).parallel().forEach(j -> {
                 double term1 = layer.getChainRuleTermWithOutput()[j];
                 double term2 = layer.getActivationFunction().computeDerivative(sum, layer.getPotentials()[j], max);
+
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
                     double term3 = previousLayer.getOutputs()[i];
-                    ;
+
                     double step = term1 * term2 * term3;
-                    previousLayer.getWeightsStepAccumulator()[j][i] += step;
+                    previousLayer.getWeightsStepAccumulator()[j][i] += step;  // accumulate the partial derivatives
                 }
             });
         }
     }
 
-    private void doStep() {
-        double delta = 1e-8;
+    private void updateWeights() {  // update the weights + optimize with momentum and RMSProp
+        double delta = 1e-8;  // smoothing term to avoid division by zero
+
         for (int l = 1; l < layers.size(); l++) {
             Layer previousLayer = layers.get(l - 1);
             Layer layer = layers.get(l);
@@ -244,7 +249,7 @@ public class NeuralNetwork {
                     result = j;
                 }
 
-                error += truth * Math.log(predicted) + (1 - truth) * Math.log(1 - predicted);
+                error += truth * Math.log(predicted);
             }
             total++;
             if (data.getTestLabels().get(k).get(result) == 1) {

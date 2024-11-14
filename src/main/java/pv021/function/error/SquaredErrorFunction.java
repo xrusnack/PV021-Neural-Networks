@@ -1,7 +1,6 @@
 package pv021.function.error;
 
 public class SquaredErrorFunction extends ErrorFunction{
-    @Override
     public double calculateError(double[] expected, double[] actual) {
         double result = 0.0;
 
@@ -11,4 +10,7 @@ public class SquaredErrorFunction extends ErrorFunction{
 
         return result / 2.0;
     }
+
+    @Override
+    public double calculatePartialDerivative(double output, double label) { return output - label;};
 }

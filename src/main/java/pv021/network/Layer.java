@@ -2,6 +2,11 @@ package pv021.network;
 
 import pv021.function.activation.ActivationFunction;
 
+/**
+ * The class represents a single layer in a neural network, managing
+ * its neurons, weights, activations, and connections to the next layer.
+ */
+
 public class Layer {
     private final double[] outputs;
     private final double[] potentials;
@@ -26,7 +31,7 @@ public class Layer {
 
         this.chainRuleTermWithOutput = new double[size];
 
-        // TODO! size + 1 to include bias
+        // size + 1 to include bias
         this.weightsStepAccumulator = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
         this.momentum = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
         this.weights = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
