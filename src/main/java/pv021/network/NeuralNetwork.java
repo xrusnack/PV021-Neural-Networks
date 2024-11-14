@@ -33,8 +33,12 @@ public class NeuralNetwork {
     private final int batch;
     private final double momentumAlpha;
     private final boolean debug;
+    private final double rmsAlpha;
+    private final double decay;
 
-    public NeuralNetwork(Data data, List<LayerTemp> tempLayers, double learningRate, long seed, int steps, int batchSkip, double momentumAlpha, boolean debug) {
+    public NeuralNetwork(Data data, List<LayerTemp> tempLayers,
+                         double learningRate, long seed, int steps, int batchSkip, double momentumAlpha, boolean debug,
+                         double rmsAlpha, double decay) {
         this.data = data;
         this.layers = new ArrayList<>();
         this.learningRate = learningRate;
@@ -43,6 +47,8 @@ public class NeuralNetwork {
         this.batch = batchSkip;
         this.momentumAlpha = momentumAlpha;
         this.debug = debug;
+        this.rmsAlpha = rmsAlpha;
+        this.decay = decay;
         initLayers(tempLayers);
     }
 
@@ -184,9 +190,6 @@ public class NeuralNetwork {
     }
 
     private void doStep() {
-        double alpha = 0.9;
-        double ni = learningRate;
-        double decay = 0.0000;
         double delta = 1e-8;
         for (int l = 1; l < layers.size(); l++) {
             Layer previousLayer = layers.get(l - 1);
@@ -201,9 +204,9 @@ public class NeuralNetwork {
                     double rmsProp = previousLayer.getRmsprop()[j][i];
 
                     // r_ji^(t)
-                    double currentRmsProp = alpha * rmsProp + (1 - alpha) * step * step;
+                    double currentRmsProp = rmsAlpha * rmsProp + (1 - rmsAlpha) * step * step;
 
-                    double actualStep = - (ni / Math.sqrt(currentRmsProp + delta)) * step;
+                    double actualStep = - (learningRate / Math.sqrt(currentRmsProp + delta)) * step;
                     double previousStep = previousLayer.getMomentum()[j][i];
 
                     double momentumBalancedStep = actualStep * (1 - momentumAlpha) + momentumAlpha * previousStep;

@@ -21,7 +21,9 @@ public class Main {
                 200,
                 256,
                 0.9,
-                0,
+                0.9,
+                42,
+                0.0001,
                 false)
                 .addLayer(8096, new ReLuFunction())
                 .build(new SoftMaxFunction());
