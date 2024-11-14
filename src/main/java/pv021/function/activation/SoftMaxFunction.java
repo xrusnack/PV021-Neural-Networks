@@ -9,7 +9,7 @@ public class SoftMaxFunction extends ActivationFunction {
 
     @Override
     public double apply(double potential, double max) {
-        return Math.pow(Math.E, potential - max);
+        return Math.pow(Math.E, potential);
     }
 
     @Override

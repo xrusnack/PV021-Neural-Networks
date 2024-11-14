@@ -17,13 +17,13 @@ public class Main {
 
         System.out.println("Initialising Neural Network...");
         NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data,
-                0.0000075,
-                2000,
-                32,
-                0.90,
+                0.00001,
+                200,
+                256,
+                0.9,
                 0,
                 false)
-                .addLayer(3000, new ReLuFunction())
+                .addLayer(8096, new ReLuFunction())
                 .build(new SoftMaxFunction());
 
         System.out.println("Initialising Neural Weights...");
