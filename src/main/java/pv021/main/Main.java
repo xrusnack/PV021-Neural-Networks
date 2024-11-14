@@ -26,7 +26,7 @@ public class Main {
                 .build(new SoftMaxFunction());
 
         System.out.println("Training...");
-        neuralNetwork.SGD();
+        neuralNetwork.stochasticGradientDescent();
         // evaluate and save test results
 
         neuralNetwork.evaluate("predictions.csv");

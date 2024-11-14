@@ -81,7 +81,7 @@ public class NeuralNetwork {
         }
     }
 
-    public void SGD() {
+    public void stochasticGradientDescent() {
         int p = data.getTrainVectors().size();  // number of training examples
         int batchSize = Math.min(p, batch);
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList()); // choose a minibatch
