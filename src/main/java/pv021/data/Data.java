@@ -4,6 +4,10 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The class represents a dataset containing training and testing vectors and labels.
+ */
+
 public class Data {
     private final List<List<Integer>> trainVectors;
     private final List<List<Integer>> testVectors;
@@ -56,13 +60,16 @@ public class Data {
 
     private List<List<Integer>> loadVectors(String path, boolean train) throws IOException {
         String vectorsPath = path + (train ? "_train_vectors.csv" : "_test_vectors.csv");
+
         try(DataInputStream in = new DataInputStream(new FileInputStream(vectorsPath))){
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
             List<List<Integer>> result = new ArrayList<>();
             String line;
+
             while ((line = bufferedReader.readLine()) != null) {
                 List<Integer> vector = new ArrayList<>();
                 String[] numbers = line.split(",");
+
                 for (String element : numbers) {
                     int elementInt = Integer.parseInt(element);
                     vector.add(elementInt);
