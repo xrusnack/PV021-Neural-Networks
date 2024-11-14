@@ -30,17 +30,19 @@ public class NeuralNetwork {
     private final double learningRate;
     private final Random random;
     private final int steps;
-    private final int batchSkip;
+    private final int batch;
     private final double momentumAlpha;
+    private final boolean debug;
 
-    public NeuralNetwork(Data data, List<LayerTemp> tempLayers, double learningRate, long seed, int steps, int batchSkip, double momentumAlpha) {
+    public NeuralNetwork(Data data, List<LayerTemp> tempLayers, double learningRate, long seed, int steps, int batchSkip, double momentumAlpha, boolean debug) {
         this.data = data;
         this.layers = new ArrayList<>();
         this.learningRate = learningRate;
         this.random = new Random(seed);
         this.steps = steps;
-        this.batchSkip = batchSkip;
+        this.batch = batchSkip;
         this.momentumAlpha = momentumAlpha;
+        this.debug = debug;
         initLayers(tempLayers);
     }
 
@@ -71,12 +73,14 @@ public class NeuralNetwork {
 
     public void trainBatch() {
         int p = data.getTrainVectors().size();
-        int batchSize = Math.min(p, batchSkip);
+        int batchSize = Math.min(p, batch);
         System.err.println("P " + p);
         int t = 0;
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList());
         while (t < steps) {
-            printError();
+            if(debug) {
+                printError();
+            }
             Collections.shuffle(batches, random);
             for (int k : batches.subList(0, batchSize)) {
                 forward(data.getTrainVectors().get(k));
