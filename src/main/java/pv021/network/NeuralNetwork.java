@@ -84,13 +84,13 @@ public class NeuralNetwork {
     public void SGD() {
         int p = data.getTrainVectors().size();  // number of training examples
         int batchSize = Math.min(p, batch);
-        List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList());
+        List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList()); // choose a minibatch
 
         for (int t = 0; t < steps; t++) {
             if (debug  || t % 500 == 0) {
                 printError();
             }
-            Collections.shuffle(batches, random);  // choose a minibatch
+            Collections.shuffle(batches, random);
             for (int k : batches.subList(0, batchSize)) {
                 forward(data.getTrainVectors().get(k));
                 backpropagate(k, new CrossEntropy());
