@@ -84,7 +84,7 @@ public class NeuralNetwork {
         int t = 0;
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList());
         while (t < steps) {
-            if(debug) {
+            if (debug) {
                 printError();
             }
             Collections.shuffle(batches, random);
@@ -95,7 +95,8 @@ public class NeuralNetwork {
             }
 
             doStep();
-            System.err.println(t+" | max = %f".formatted(Arrays.stream(layers.get(layers.size()-1).getPotentials()).max().orElse(0)));
+            System.err.println(t + " | max = %f min = %f".formatted(Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0)
+                    , Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));
             t++;
         }
         printError();
@@ -149,7 +150,7 @@ public class NeuralNetwork {
             Layer nextLayer = layers.get(l + 1);
             Layer layer = layers.get(l);
 
-            double max = Arrays.stream(layer.getPotentials()).max().orElse(0);
+            double max = Arrays.stream(nextLayer.getPotentials()).max().orElse(0);
             double sum = IntStream.range(0, nextLayer.getSize()).mapToDouble(j -> nextLayer.getActivationFunction().apply(nextLayer.getPotentials()[j], max)).sum();
 
             // sum of activation functions applied to potentials - optimisation
@@ -161,6 +162,7 @@ public class NeuralNetwork {
                     double term1 = nextLayer.getChainRuleTermWithOutput()[r];
                     double term2 = nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[r], max);
                     double term3 = layer.getWeights()[r][j + 1];
+
 
                     result += term1 * term2 * term3;
                 }
@@ -182,7 +184,8 @@ public class NeuralNetwork {
                 double term1 = layer.getChainRuleTermWithOutput()[j];
                 double term2 = layer.getActivationFunction().computeDerivative(sum, layer.getPotentials()[j], max);
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
-                    double term3 = previousLayer.getOutputs()[i];;
+                    double term3 = previousLayer.getOutputs()[i];
+                    ;
                     double step = term1 * term2 * term3;
                     previousLayer.getWeightsStepAccumulator()[j][i] += step;
                 }
@@ -207,7 +210,7 @@ public class NeuralNetwork {
                     // r_ji^(t)
                     double currentRmsProp = rmsAlpha * rmsProp + (1 - rmsAlpha) * step * step;
 
-                    double actualStep = - (learningRate / Math.sqrt(currentRmsProp + delta)) * step;
+                    double actualStep = -(learningRate / Math.sqrt(currentRmsProp + delta)) * step;
                     double previousStep = previousLayer.getMomentum()[j][i];
 
                     double momentumBalancedStep = actualStep * (1 - momentumAlpha) + momentumAlpha * previousStep;
@@ -249,7 +252,7 @@ public class NeuralNetwork {
             }
         }
 
-        error *= -1.0/p;
+        error *= -1.0 / p;
 
         double pct = (correct * 100.0) / total;
 

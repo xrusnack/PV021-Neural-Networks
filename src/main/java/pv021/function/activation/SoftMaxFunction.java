@@ -4,12 +4,12 @@ public class SoftMaxFunction extends ActivationFunction {
 
     @Override
     public double computeOutput(double sum, double potential, double max) {
-        return apply(potential, max) / sum;
+        return apply(potential, max) / (sum + 1e-8);
     }
 
     @Override
     public double apply(double potential, double max) {
-        return Math.pow(Math.E, potential);
+        return Math.pow(Math.E, potential - max);
     }
 
     @Override

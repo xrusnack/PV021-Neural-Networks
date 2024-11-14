@@ -14,8 +14,7 @@ public class SigmoidFunction extends ActivationFunction {
 
     @Override
     public double computeDerivative(double sum, double potential, double max) {
-        double a = (apply(potential, max) - 1);
-        double b = (apply(potential, max));
-        return a / (b + 1e-8);
+        double x = apply(potential, max);
+        return (x - 1) / (x + 1e-8);
     }
 }
