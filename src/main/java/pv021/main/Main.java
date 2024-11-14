@@ -16,8 +16,8 @@ public class Main {
         //Data data = new Data("data/export", 2);
 
         System.out.println("Initialising Neural Network...");
-        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.00001, 2000, 128, 0.9, 0)
-                .addLayer(500, new ReLuFunction())
+        NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data, 0.00001, 2000, 32, 0.9, 0)
+                .addLayer(100, new ReLuFunction())
                 .build(new SoftMaxFunction());
 
         System.out.println("Initialising Neural Weights...");

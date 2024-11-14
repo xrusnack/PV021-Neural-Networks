@@ -9,10 +9,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -78,7 +76,7 @@ public class NeuralNetwork {
         int t = 0;
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList());
         while (t < steps) {
-            //printError();
+            printError();
             Collections.shuffle(batches, random);
             for (int k : batches.subList(0, batchSize)) {
                 forward(data.getTrainVectors().get(k));
@@ -114,14 +112,15 @@ public class NeuralNetwork {
                 layer.getPotentials()[j] = potential;
             });
 
+            double max = Arrays.stream(layer.getPotentials()).max().orElse(0);
             double sum = 0;
 
             for (int j = 0; j < layer.getSize(); j++) {   // sum of activation functions applied to potentials - optimisation
-                sum += layer.getActivationFunction().apply(layer.getPotentials()[j]);
+                sum += layer.getActivationFunction().apply(layer.getPotentials()[j], max);
             }
 
             for (int j = 0; j < layer.getSize(); j++) {   // calculate outputs
-                layer.getOutputs()[j + 1] = layer.getActivationFunction().computeOutput(sum, layer.getPotentials()[j]);
+                layer.getOutputs()[j + 1] = layer.getActivationFunction().computeOutput(sum, layer.getPotentials()[j], max);
             }
         }
     }
@@ -140,7 +139,8 @@ public class NeuralNetwork {
             Layer nextLayer = layers.get(l + 1);
             Layer layer = layers.get(l);
 
-            double sum = IntStream.range(0, nextLayer.getSize()).mapToDouble(j -> nextLayer.getActivationFunction().apply(nextLayer.getPotentials()[j])).sum();
+            double max = Arrays.stream(layer.getPotentials()).max().orElse(0);
+            double sum = IntStream.range(0, nextLayer.getSize()).mapToDouble(j -> nextLayer.getActivationFunction().apply(nextLayer.getPotentials()[j], max)).sum();
 
             // sum of activation functions applied to potentials - optimisation
 
@@ -149,7 +149,7 @@ public class NeuralNetwork {
 
                 for (int r = 0; r < nextLayer.getSize(); r++) {
                     double term1 = nextLayer.getChainRuleTermWithOutput()[r];
-                    double term2 = nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[r]);
+                    double term2 = nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[r], max);
                     double term3 = layer.getWeights()[r][j + 1];
                     result += term1 * term2 * term3;
                 }
@@ -164,12 +164,13 @@ public class NeuralNetwork {
             Layer previousLayer = layers.get(l - 1);
             Layer layer = layers.get(l);
 
-            double sum = IntStream.range(0, layer.getSize()).mapToDouble(j -> layer.getActivationFunction().apply(layer.getPotentials()[j])).sum();
+            double max = Arrays.stream(layer.getPotentials()).max().orElse(0);
+            double sum = IntStream.range(0, layer.getSize()).mapToDouble(j -> layer.getActivationFunction().apply(layer.getPotentials()[j], max)).sum();
 
             IntStream.range(0, layer.getSize()).parallel().forEach(j -> {
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
                     double step = layer.getChainRuleTermWithOutput()[j]
-                            * layer.getActivationFunction().computeDerivative(sum, layer.getPotentials()[j])
+                            * layer.getActivationFunction().computeDerivative(sum, layer.getPotentials()[j], max)
                             * previousLayer.getOutputs()[i];
                     previousLayer.getWeightsStepAccumulator()[j][i] += step;
                 }
