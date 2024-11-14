@@ -16,7 +16,7 @@ echo "#################"
 echo "     RUNNING     "
 echo "#################"
 
-nice -n 19 java -cp target/pv021-1.0-SNAPSHOT.jar pv021.main.Main
+time nice -n 19 java -cp target/pv021-1.0-SNAPSHOT.jar pv021.main.Main
 
 ## use nice to decrease priority in order to comply with aisa rules
 ## https://www.fi.muni.cz/tech/unix/computation.html.en
