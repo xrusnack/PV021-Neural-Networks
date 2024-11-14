@@ -22,7 +22,8 @@ public class Main {
                 42,
                 0, // 0: 89.02 0.0001: 88.66 0.001: 85.69
                 false)
-                .addLayer(512, new ReLuFunction())
+                //.addLayer(4096, new ReLuFunction())
+                .addLayer(64, new ReLuFunction())
                 .build(new SoftMaxFunction());
 
         System.out.println("Training...");
