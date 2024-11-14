@@ -78,7 +78,7 @@ public class NeuralNetwork {
         int t = 0;
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList());
         while (t < steps) {
-            printError();
+            //printError();
             Collections.shuffle(batches, random);
             for (int k : batches.subList(0, batchSize)) {
                 forward(data.getTrainVectors().get(k));
@@ -95,8 +95,9 @@ public class NeuralNetwork {
 
     public <T extends Number> void forward(List<T> input) {
         Layer inputLayer = layers.get(0);
-        for (int i = 0; i < data.getLabelCount(); i++) {
-            inputLayer.getOutputs()[i + 1] = Double.parseDouble(input.get(i).toString());
+        for (int i = 0; i < inputLayer.getSize(); i++) {
+            String str = input.get(i).toString();
+            inputLayer.getOutputs()[i + 1] = Double.parseDouble(str);
         }
 
         for (int l = 1; l < layers.size(); l++) {
@@ -130,8 +131,9 @@ public class NeuralNetwork {
         for (int j = 0; j < outputLayer.getSize(); j++) {
             double y = outputLayer.getOutputs()[j + 1];
             double d = data.getTrainLabels().get(k).get(j);
-            //outputLayer.getChainRuleTermWithOutput()[j] = -d / y + (1 - d) / (1 - y);
-            outputLayer.getChainRuleTermWithOutput()[j] = y - d;
+
+            outputLayer.getChainRuleTermWithOutput()[j] = -d / y + (1 - d) / (1 - y);
+            //outputLayer.getChainRuleTermWithOutput()[j] = y - d;
         }
 
         for (int l = layers.size() - 2; l >= 1; l--) {
@@ -198,6 +200,7 @@ public class NeuralNetwork {
                     double previousStep = previousLayer.getMomentum()[j][i];
 
                     double momentumBalancedStep = actualStep * (1 - momentumAlpha) + momentumAlpha * previousStep;
+
 
                     previousLayer.getWeights()[j][i] += momentumBalancedStep;
                     previousLayer.getWeightsStepAccumulator()[j][i] = 0;
