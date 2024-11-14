@@ -87,7 +87,7 @@ public class NeuralNetwork {
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList());
 
         for (int t = 0; t < steps; t++) {
-            if (debug  || t % 500 == 0) {
+            if (debug && t % 1000 == 0) {
                 printError();
             }
             Collections.shuffle(batches, random);  // choose a minibatch
@@ -97,9 +97,9 @@ public class NeuralNetwork {
                 computeGradient();
             }
             updateWeights();  // add momentum and RMSProp
-            System.err.println(t + " | max = %f min = %f".formatted(
-                    Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0),
-                    Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));
+            //System.err.println(t + " | max = %f min = %f".formatted(
+            //        Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0),
+            //        Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));
         }
         printError();
     }
@@ -231,11 +231,13 @@ public class NeuralNetwork {
     }
 
 
-    private boolean printError() {
-        double error = 0;
+    private void printError() {
         Layer outputLayer = layers.get(layers.size() - 1);
+
+        double errorTest = 0;
         int total = 0;
         int correct = 0;
+
         int p = data.getTestVectors().size();
         for (int k = 0; k < p; k++) {
             forward(data.getTestVectors().get(k));
@@ -249,7 +251,7 @@ public class NeuralNetwork {
                     result = j;
                 }
 
-                error += truth * Math.log(predicted) + (1 - truth) * Math.log(1 - predicted);
+                errorTest -= (truth * Math.log(predicted) + (1 - truth) * Math.log(1 - predicted)) / p;
             }
             total++;
             if (data.getTestLabels().get(k).get(result) == 1) {
@@ -257,14 +259,35 @@ public class NeuralNetwork {
             }
         }
 
-        error *= -1.0 / p;
+        double accuracyTest = (correct * 100.0) / total;
 
-        double pct = (correct * 100.0) / total;
+        double errorTrain = 0;
+        total = 0;
+        correct = 0;
 
-        System.out.println(error + " / %f".formatted(pct));
+        p = data.getTrainVectors().size();
+        for (int k = 0; k < p; k++) {
+            forward(data.getTrainVectors().get(k));
+            double max = -Double.MAX_VALUE;
+            int result = 0;
+            for (int j = 0; j < outputLayer.getSize(); j++) {
+                double predicted = outputLayer.getOutputs()[j + 1];
+                int truth = data.getTrainLabels().get(k).get(j);
+                if (predicted > max) {
+                    max = predicted;
+                    result = j;
+                }
 
-        return error < 0.01;
+                errorTrain -= (truth * Math.log(predicted) + (1 - truth) * Math.log(1 - predicted)) / p;
+            }
+            total++;
+            if (data.getTrainLabels().get(k).get(result) == 1) {
+                correct++;
+            }
+        }
 
+        double accuracyTrain = (correct * 100.0) / total;
+        System.out.printf("test: [loss: %.6f accuracy: %.2f%%] train: [loss: %.6f accuracy: %.2f%%] overfit: %.6f / %.2f%%%n", errorTest, accuracyTest, errorTrain, accuracyTrain, -errorTrain + errorTest, accuracyTrain - accuracyTest);
     }
 
     public void evaluate(String fileName) throws IOException {
