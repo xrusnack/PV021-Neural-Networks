@@ -88,7 +88,7 @@ public class NeuralNetwork {
                 updateWeightsStep();
             }
 
-            //System.err.println(t);
+            System.err.println(t);
             doStep();
             t++;
         }
@@ -186,7 +186,7 @@ public class NeuralNetwork {
     private void doStep() {
         double alpha = 0.9;
         double ni = learningRate;
-        double decay = 0.01;
+        double decay = 0.0005;
         double delta = 1e-8;
         for (int l = 1; l < layers.size(); l++) {
             Layer previousLayer = layers.get(l - 1);
