@@ -46,7 +46,7 @@ public class NeuralNetwork {
     private final double decay;
     private final ErrorFunction errorFunction = new CrossEntropy();
 
-    public static int threads = 16;
+    public static int threads = Runtime.getRuntime().availableProcessors();
     private final ThreadLocal<Integer> threadId = ThreadLocal.withInitial(() -> (int) (Thread.currentThread().getId() % threads));
     private final ForkJoinPool customThreadPool = new ForkJoinPool(threads);
 
@@ -98,7 +98,7 @@ public class NeuralNetwork {
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList()); // choose a minibatch
 
         for (int t = 0; t < steps; t++) {
-            if (debug && t % 500 == 0) {
+            if (debug && t % 100 == 0) {
                 printError();
             }
             Collections.shuffle(batches, random);
@@ -109,7 +109,7 @@ public class NeuralNetwork {
 
             })).get();
             updateWeights();
-            System.err.println(t);
+            //System.err.println(t);
             /*System.err.println(t + " | max = %f min = %f".formatted(
                     Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0),
                     Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));*/
