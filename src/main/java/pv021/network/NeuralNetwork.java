@@ -41,7 +41,6 @@ public class NeuralNetwork {
     private final int steps;
     private final int batch;
     private final double momentumAlpha;
-    private final boolean debug;
     private final double rmsAlpha;
     private final double decay;
     private final ErrorFunction errorFunction = new CrossEntropy();
@@ -49,9 +48,10 @@ public class NeuralNetwork {
     public static int threads = Runtime.getRuntime().availableProcessors();
     private final ThreadLocal<Integer> threadId = ThreadLocal.withInitial(() -> (int) (Thread.currentThread().getId() % threads));
     private final ForkJoinPool customThreadPool = new ForkJoinPool(threads);
+    private final int evaluationStep;
 
     public NeuralNetwork(Data data, List<LayerTemp> tempLayers,
-                         double learningRate, long seed, int steps, int batchSkip, double momentumAlpha, boolean debug,
+                         double learningRate, long seed, int steps, int batchSkip, double momentumAlpha, int evaluationStep,
                          double rmsAlpha, double decay) {
         this.data = data;
         this.layers = new ArrayList<>();
@@ -60,7 +60,7 @@ public class NeuralNetwork {
         this.steps = steps;
         this.batch = batchSkip;
         this.momentumAlpha = momentumAlpha;
-        this.debug = debug;
+        this.evaluationStep = evaluationStep;
         this.rmsAlpha = rmsAlpha;
         this.decay = decay;
         initLayers(tempLayers);
@@ -98,7 +98,7 @@ public class NeuralNetwork {
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList()); // choose a minibatch
 
         for (int t = 0; t < steps; t++) {
-            if (debug && t % 100 == 0) {
+            if (t % evaluationStep == 0) {
                 printError();
             }
             Collections.shuffle(batches, random);

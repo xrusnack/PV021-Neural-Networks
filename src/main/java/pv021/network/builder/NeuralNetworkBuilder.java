@@ -16,12 +16,12 @@ public class NeuralNetworkBuilder {
     private final long seed;
     private final int batchSkip;
     private final double momentumAlpha;
-    private final boolean debug;
+    private final int evaluationStep;
     private final double rmsAlpha;
     private final double decay;
 
     public NeuralNetworkBuilder(Data data, 
-                                double learningRate, int steps, int batchSize, double momentumAlpha, double rmsAlpha, long seed, double decay, boolean debug) {
+                                double learningRate, int steps, int batchSize, double momentumAlpha, double rmsAlpha, long seed, double decay, int evaluationStep) {
         this.layers = new ArrayList<>();
         this.data = data;
         this.steps = steps;
@@ -30,7 +30,7 @@ public class NeuralNetworkBuilder {
         this.momentumAlpha = momentumAlpha;
         this.layers.add(new LayerTemp(data.getTestVectors().get(0).size(), new IdentityFunction()));
         this.seed = seed;
-        this.debug = debug;
+        this.evaluationStep = evaluationStep;
         this.rmsAlpha=rmsAlpha;
         this.decay = decay;
     }
@@ -42,7 +42,7 @@ public class NeuralNetworkBuilder {
 
     public NeuralNetwork build(ActivationFunction activationFunction) {
         layers.add(new LayerTemp(data.getLabelCount(), activationFunction));
-        return new NeuralNetwork(data, layers, learningRate, seed, steps, batchSkip, momentumAlpha, debug, rmsAlpha, decay);
+        return new NeuralNetwork(data, layers, learningRate, seed, steps, batchSkip, momentumAlpha, evaluationStep, rmsAlpha, decay);
     }
 
 }
