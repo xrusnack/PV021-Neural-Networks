@@ -8,13 +8,18 @@ import pv021.function.activation.ActivationFunction;
  */
 
 public class Layer {
-    private final double[] outputs;
-    private final double[] potentials;
+
+    private final double[][] outputs;
+    private final double[][] potentials;
+
     private final double[][] weights;
     private final ActivationFunction activationFunction;
     private final int nextLayerSize;
 
-    private final double[] chainRuleTermWithOutput;
+    private final double[][] chainRuleTermWithOutput;
+
+
+    private final Object weightsStepAccumulatorMutex = new Object();
     private final double[][] weightsStepAccumulator;
     private final double[][] momentum;
     private final double[][] rmsprop;
@@ -25,11 +30,9 @@ public class Layer {
         this.activationFunction = activationFunction;
         this.size = size;
 
-        this.outputs = new double[size + 1];
-        outputs[0] = 1; // bias
-        this.potentials = input ? null : new double[size];
-
-        this.chainRuleTermWithOutput = new double[size];
+        this.outputs = new double[NeuralNetwork.threads][size + 1];
+        this.potentials = input ? null : new double[NeuralNetwork.threads][size];
+        chainRuleTermWithOutput = new double[NeuralNetwork.threads][size];
 
         // size + 1 to include bias
         this.weightsStepAccumulator = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
@@ -38,7 +41,7 @@ public class Layer {
         this.rmsprop = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
     }
 
-    public int getSize(){
+    public int getSize() {
         return size;
     }
 
@@ -46,7 +49,7 @@ public class Layer {
         return nextLayerSize;
     }
 
-    public boolean isOutputLayer(){
+    public boolean isOutputLayer() {
         return weights == null;
     }
 
@@ -54,11 +57,11 @@ public class Layer {
         return activationFunction;
     }
 
-    public double[] getPotentials() {
+    public double[][] getPotentials() {
         return potentials;
     }
 
-    public double[] getOutputs() {
+    public double[][] getOutputs() {
         return outputs;
     }
 
@@ -66,11 +69,15 @@ public class Layer {
         return weights;
     }
 
-    public double[][] getWeightsStepAccumulator() {
+    public double[][] getWeightsStepAccumulator2() {
         return weightsStepAccumulator;
     }
 
-    public double[] getChainRuleTermWithOutput() {
+    public Object getWeightsStepAccumulatorMutex() {
+        return weightsStepAccumulatorMutex;
+    }
+
+    public double[][] getChainRuleTermWithOutput() {
         return chainRuleTermWithOutput;
     }
 
