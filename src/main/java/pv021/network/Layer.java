@@ -20,7 +20,7 @@ public class Layer {
 
 
     private final Object weightsStepAccumulatorMutex = new Object();
-    private final double[][] weightsStepAccumulator;
+    private final double[][][] weightsStepAccumulator;
     private final double[][] momentum;
     private final double[][] rmsprop;
     private final int size;
@@ -35,7 +35,7 @@ public class Layer {
         chainRuleTermWithOutput = new double[NeuralNetwork.threads][size];
 
         // size + 1 to include bias
-        this.weightsStepAccumulator = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
+        this.weightsStepAccumulator = nextLayerSize > 0 ? new double[NeuralNetwork.threads][nextLayerSize][size + 1] : null;
         this.momentum = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
         this.weights = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
         this.rmsprop = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
@@ -69,7 +69,7 @@ public class Layer {
         return weights;
     }
 
-    public double[][] getWeightsStepAccumulator2() {
+    public double[][][] getWeightsStepAccumulator2() {
         return weightsStepAccumulator;
     }
 
