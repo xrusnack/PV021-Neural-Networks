@@ -100,16 +100,13 @@ public class NeuralNetwork {
                 printError(t);
             }
             Collections.shuffle(batches, random);
-            int finalT = t;
             customThreadPool.submit(() -> batches.subList(0, batchSize).parallelStream().forEach(k -> {
                 int tid = (int) (Thread.currentThread().getId() % threads);
-                generateDropoutMask(tid, finalT);
                 forward(data.getTrainVectors().get(k), tid);
                 backpropagate(k, errorFunction, tid);
                 computeGradient(tid);
             })).get();
             updateWeights();
-            cancelDropout();
             //System.err.println(t);
             /*System.err.println(t + " | max = %f min = %f".formatted(
                     Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0),
@@ -118,27 +115,6 @@ public class NeuralNetwork {
 
         if (steps >= evaluationStep) {
             printError(steps);
-        }
-    }
-
-    private void generateDropoutMask(int tid, int finalT) {
-        for (Layer layer : layers) {
-            for (int j = 0; j < layer.getSize(); j++) {
-                if (layer.isOutputLayer()) {
-                    layer.getDropout()[tid][j] = 1;
-                } else {
-                    layer.getDropout()[tid][j] = (j + finalT) % 4 == 0 ? 1 : 0;
-                }
-            }
-        }
-    }
-
-    private void cancelDropout() {
-        int tid = threadId.get();
-        for (Layer layer : layers) {
-            for (int j = 0; j < layer.getSize(); j++) {
-                layer.getDropout()[tid][j] = 1;
-            }
         }
     }
 
@@ -175,7 +151,7 @@ public class NeuralNetwork {
             // calculate outputs for each neuron in the layer
             for (int j = 0; j < layer.getSize(); j++) {
                 layer.getOutputs()[tid][j + 1] = layer.getActivationFunction()
-                        .computeOutput(sum, layer.getPotentials()[tid][j], max) * layer.getDropout()[tid][j];
+                        .computeOutput(sum, layer.getPotentials()[tid][j], max);/* * layer.getDropout()[tid][j]; */
             }
         }
     }
@@ -208,7 +184,7 @@ public class NeuralNetwork {
                             * nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[tid][r], max)
                             * layer.getWeights()[r][j + 1];
                 }
-                layer.getChainRuleTermWithOutput()[tid][j] = result * layer.getDropout()[tid][j];
+                layer.getChainRuleTermWithOutput()[tid][j] = result;/* layer.getDropout()[tid][j];*/
             }
         }
     }
@@ -231,7 +207,7 @@ public class NeuralNetwork {
                     double term3 = previousLayer.getOutputs()[tid][i];
 
                     double step = term1 * term2 * term3;
-                    previousLayer.getWeightsStepAccumulator2()[tid][j][i] += step * layer.getDropout()[tid][j];  // accumulate the partial derivatives
+                    previousLayer.getWeightsStepAccumulator2()[tid][j][i] += step;/* * layer.getDropout()[tid][j]; */  // accumulate the partial derivatives
                 }
             }
         }
