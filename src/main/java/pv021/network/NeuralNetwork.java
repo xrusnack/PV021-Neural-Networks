@@ -231,6 +231,9 @@ public class NeuralNetwork {
             for (int j = 0; j < layer.getSize(); j++) {
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
                     if(random.nextDouble() < dropout){
+                        for (int tid = 0; tid < threads; tid++) {
+                            previousLayer.getWeightsStepAccumulator2()[tid][j][i] = 0;
+                        }
                         continue;
                     }
                     // the big sum

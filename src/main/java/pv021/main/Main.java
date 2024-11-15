@@ -22,7 +22,7 @@ public class Main {
                 42,
                 0,
                 50,
-                0.15)
+                0.50)
                 //.addLayer(4096, new ReLuFunction())
                 .addLayer(128, new ReLuFunction())
                 .build(new SoftMaxFunction());
