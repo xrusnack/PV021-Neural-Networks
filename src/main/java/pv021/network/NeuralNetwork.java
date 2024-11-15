@@ -176,15 +176,17 @@ public class NeuralNetwork {
                     nextLayer.getActivationFunction().apply(nextLayer.getPotentials()[tid][j], max)).sum();
 
             // sum of activation functions applied to potentials - optimisation
-            for (int j = 0; j < layer.getSize(); j++) {
-                double result = 0;
 
-                for (int r = 0; r < nextLayer.getSize(); r++) {
-                    result += nextLayer.getChainRuleTermWithOutput()[tid][r]
-                            * nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[tid][r], max)
-                            * layer.getWeights()[r][j + 1];
+            for (int j = 0; j < layer.getSize(); j++) {
+                layer.getChainRuleTermWithOutput()[tid][j] = 0;
+            }
+            for (int r = 0; r < nextLayer.getSize(); r++) {
+                double term1 = nextLayer.getChainRuleTermWithOutput()[tid][r];
+                double term2 = nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[tid][r], max);
+                for (int j = 0; j < layer.getSize(); j++) {
+                    double term3 = layer.getWeights()[r][j + 1];
+                    layer.getChainRuleTermWithOutput()[tid][j] += term1 * term2 * term3;
                 }
-                layer.getChainRuleTermWithOutput()[tid][j] = result;/* layer.getDropout()[tid][j];*/
             }
         }
     }
@@ -202,12 +204,13 @@ public class NeuralNetwork {
             for (int j = 0; j < layer.getSize(); j++) {
                 double term1 = layer.getChainRuleTermWithOutput()[tid][j];
                 double term2 = layer.getActivationFunction().computeDerivative(sum, layer.getPotentials()[tid][j], max);
+                double t12 = term1 * term2;
 
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
                     double term3 = previousLayer.getOutputs()[tid][i];
+                    double res = t12 * term3;
 
-                    double step = term1 * term2 * term3;
-                    previousLayer.getWeightsStepAccumulator2()[tid][j][i] += step;/* * layer.getDropout()[tid][j]; */  // accumulate the partial derivatives
+                    previousLayer.getWeightsStepAccumulator2()[tid][j][i] += res;/* * layer.getDropout()[tid][j]; */  // accumulate the partial derivatives
                 }
             }
         }
