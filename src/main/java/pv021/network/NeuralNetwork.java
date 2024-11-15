@@ -46,7 +46,7 @@ public class NeuralNetwork {
     private final double decay;
     private final ErrorFunction errorFunction = new CrossEntropy();
 
-    public static int threads = 12;
+    public static int threads = 16;
     private final ThreadLocal<Integer> threadId = ThreadLocal.withInitial(() -> (int) (Thread.currentThread().getId() % threads));
     private final ForkJoinPool customThreadPool = new ForkJoinPool(threads);
 
