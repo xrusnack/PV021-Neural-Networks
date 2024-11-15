@@ -15,7 +15,7 @@ public class Main {
 
         NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data,
                 0.002,
-                20 * 1000,
+                100,
                 512,
                 0.8,
                 0.8, // 0.5: 88.84 0.8: 89.02

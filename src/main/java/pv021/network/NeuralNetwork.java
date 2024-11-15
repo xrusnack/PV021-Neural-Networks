@@ -92,7 +92,7 @@ public class NeuralNetwork {
         }
     }
 
-    public void stochasticGradientDescent() throws Exception{
+    public void stochasticGradientDescent() throws Exception {
         int p = data.getTrainVectors().size();  // number of training examples
         int batchSize = Math.min(p, batch);
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList()); // choose a minibatch
@@ -328,63 +328,33 @@ public class NeuralNetwork {
         System.out.printf("test: [loss: %.6f accuracy: %.2f%%] train: [loss: %.6f accuracy: %.2f%%] overfit: %.6f / %.2f%%%n", errorTest, accuracyTest, errorTrain, accuracyTrain, -errorTrain + errorTest, accuracyTrain - accuracyTest);
     }
 
-    public void evaluate(String fileName) throws IOException {
+    public void evaluate(String fileName) throws Exception {
         System.out.println("==============");
         File csvOutputFile = new File(fileName);
-        try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
-            for (int k = 0; k < data.getTestVectors().size(); k++) {
+        int p = data.getTestVectors().size();
+        int[] results = new int[p];
+
+        customThreadPool.submit(() -> {
+            IntStream.range(0, p).parallel().forEach(k -> {
                 forward(data.getTestVectors().get(k));
                 Layer outputLayer = layers.get(layers.size() - 1);
                 double max = -Double.MAX_VALUE;
                 int result = 0;
                 for (int j = 0; j < outputLayer.getSize(); j++) {
                     double predicted = outputLayer.getOutputs()[threadId.get()][j + 1];
-                    double truth = data.getTestLabels().get(k).get(j);
                     if (predicted > max) {
                         max = predicted;
                         result = j;
                     }
-                    // System.out.printf("Predicted: %f, expected: %f\n", predicted, truth);
                 }
-                // System.out.printf("\n");
+                results[k] = result;
+            });
+        }).get();
 
+        try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
+            for (int result : results) {
                 pw.println(result);
             }
-        }
-
-    }
-
-    public void drawDistribution() {
-        int w = 200;
-        int h = 200;
-
-        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_3BYTE_BGR);
-
-        Layer outputLayer = layers.get(layers.size() - 1);
-        for (int x = 0; x < w; x++) {
-            for (int y = 0; y < h; y++) {
-                List<Double> input = List.of(x / (w - 1.0), y / (h - 1.0));
-                forward(input);
-
-                double max = -Double.MAX_VALUE;
-                int result = 0;
-                for (int j = 0; j < outputLayer.getSize(); j++) {
-                    double predicted = outputLayer.getOutputs()[threadId.get()][j + 1];
-                    if (predicted > max) {
-                        max = predicted;
-                        result = j;
-                    }
-                }
-
-                double pct = result / (data.getLabelCount() - 1.0);
-                img.setRGB(x, y, new Color(0, (int) (255 * pct), 0).getRGB());
-            }
-        }
-
-        try {
-            ImageIO.write(img, "PNG", new File("distribution.png"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 }
