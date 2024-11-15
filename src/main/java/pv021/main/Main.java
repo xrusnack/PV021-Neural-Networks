@@ -3,6 +3,7 @@ package pv021.main;
 import pv021.data.Data;
 import pv021.function.activation.ReLuFunction;
 import pv021.function.activation.SoftMaxFunction;
+import pv021.function.activation.TanHFunction;
 import pv021.network.NeuralNetwork;
 import pv021.network.builder.NeuralNetworkBuilder;
 
@@ -14,8 +15,8 @@ public class Main {
         System.out.println("Initialising Neural Network...");
 
         NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data,
-                0.002,
-                1000,
+                0.001,
+                10000,
                 512,
                 0.8,
                 0.8,
@@ -24,7 +25,8 @@ public class Main {
                 100,
                 0.4)
                 //.addLayer(4096, new ReLuFunction())
-                .addLayer(128, new ReLuFunction())
+                .addLayer(256, new ReLuFunction())
+                .addLayer(256, new TanHFunction())
                 .build(new SoftMaxFunction());
 
         System.out.println("Training...");

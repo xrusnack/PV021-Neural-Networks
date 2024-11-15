@@ -134,7 +134,9 @@ public class NeuralNetwork {
                 double potential = 0;
 
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
-                    potential += previousLayer.getWeights()[j][i] * previousLayer.getOutputs()[tid][i];
+                    double w = previousLayer.getWeights()[j][i];
+                    double o = previousLayer.getOutputs()[tid][i];
+                    potential += w * o;
                 }
 
                 layer.getPotentials()[tid][j] = potential;
@@ -183,9 +185,10 @@ public class NeuralNetwork {
             for (int r = 0; r < nextLayer.getSize(); r++) {
                 double term1 = nextLayer.getChainRuleTermWithOutput()[tid][r];
                 double term2 = nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[tid][r], max);
+                double t12 = term1 * term2;
                 for (int j = 0; j < layer.getSize(); j++) {
                     double term3 = layer.getWeights()[r][j + 1];
-                    layer.getChainRuleTermWithOutput()[tid][j] += term1 * term2 * term3;
+                    layer.getChainRuleTermWithOutput()[tid][j] += t12 * term3;
                 }
             }
         }
