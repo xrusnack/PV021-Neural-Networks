@@ -5,11 +5,7 @@ import pv021.function.error.CrossEntropy;
 import pv021.function.error.ErrorFunction;
 import pv021.network.builder.LayerTemp;
 
-import javax.imageio.ImageIO;
-import java.awt.Color;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Random;
@@ -104,28 +100,50 @@ public class NeuralNetwork {
                 printError(t);
             }
             Collections.shuffle(batches, random);
+            int finalT = t;
             customThreadPool.submit(() -> batches.subList(0, batchSize).parallelStream().forEach(k -> {
-                forward(data.getTrainVectors().get(k));
-                backpropagate(k, errorFunction);
-                computeGradient();
-
+                int tid = (int) (Thread.currentThread().getId() % threads);
+                generateDropoutMask(tid, finalT);
+                forward(data.getTrainVectors().get(k), tid);
+                backpropagate(k, errorFunction, tid);
+                computeGradient(tid);
             })).get();
             updateWeights();
+            cancelDropout();
             //System.err.println(t);
             /*System.err.println(t + " | max = %f min = %f".formatted(
                     Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0),
                     Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));*/
         }
 
-        if(steps >= evaluationStep) {
+        if (steps >= evaluationStep) {
             printError(steps);
         }
     }
 
-    public <T extends Number> void forward(List<Double> input) {
-        Layer inputLayer = layers.get(0);
+    private void generateDropoutMask(int tid, int finalT) {
+        for (Layer layer : layers) {
+            for (int j = 0; j < layer.getSize(); j++) {
+                if (layer.isOutputLayer()) {
+                    layer.getDropout()[tid][j] = 1;
+                } else {
+                    layer.getDropout()[tid][j] = (j + finalT) % 4 == 0 ? 1 : 0;
+                }
+            }
+        }
+    }
 
+    private void cancelDropout() {
         int tid = threadId.get();
+        for (Layer layer : layers) {
+            for (int j = 0; j < layer.getSize(); j++) {
+                layer.getDropout()[tid][j] = 1;
+            }
+        }
+    }
+
+    public <T extends Number> void forward(List<Double> input, int tid) {
+        Layer inputLayer = layers.get(0);
 
         inputLayer.getOutputs()[tid][0] = 1; // bias
         for (int i = 0; i < inputLayer.getSize(); i++) {  // start the forward pass by evaluating the input neurons
@@ -142,6 +160,7 @@ public class NeuralNetwork {
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
                     potential += previousLayer.getWeights()[j][i] * previousLayer.getOutputs()[tid][i];
                 }
+
                 layer.getPotentials()[tid][j] = potential;
 
             }
@@ -156,14 +175,13 @@ public class NeuralNetwork {
             // calculate outputs for each neuron in the layer
             for (int j = 0; j < layer.getSize(); j++) {
                 layer.getOutputs()[tid][j + 1] = layer.getActivationFunction()
-                        .computeOutput(sum, layer.getPotentials()[tid][j], max);
+                        .computeOutput(sum, layer.getPotentials()[tid][j], max) * layer.getDropout()[tid][j];
             }
         }
     }
 
-    private void backpropagate(int k, ErrorFunction errorFunction) {
+    private void backpropagate(int k, ErrorFunction errorFunction, int tid) {
         Layer outputLayer = layers.get(layers.size() - 1);
-        int tid = threadId.get();
         for (int j = 0; j < outputLayer.getSize(); j++) {  // start with the output layer
             double y = outputLayer.getOutputs()[tid][j + 1];
             double d = data.getTrainLabels().get(k).get(j);
@@ -190,17 +208,15 @@ public class NeuralNetwork {
                             * nextLayer.getActivationFunction().computeDerivative(sum, nextLayer.getPotentials()[tid][r], max)
                             * layer.getWeights()[r][j + 1];
                 }
-                layer.getChainRuleTermWithOutput()[tid][j] = result;
+                layer.getChainRuleTermWithOutput()[tid][j] = result * layer.getDropout()[tid][j];
             }
         }
     }
 
-    private void computeGradient() {
+    private void computeGradient(int tid) {
         for (int l = 1; l < layers.size(); l++) {
             Layer previousLayer = layers.get(l - 1);
             Layer layer = layers.get(l);
-
-            int tid = threadId.get();
 
             double max = Arrays.stream(layer.getPotentials()[tid]).max().orElse(0);
             double sum = IntStream.range(0, layer.getSize()).mapToDouble(j ->
@@ -215,7 +231,7 @@ public class NeuralNetwork {
                     double term3 = previousLayer.getOutputs()[tid][i];
 
                     double step = term1 * term2 * term3;
-                    previousLayer.getWeightsStepAccumulator2()[tid][j][i] += step;  // accumulate the partial derivatives
+                    previousLayer.getWeightsStepAccumulator2()[tid][j][i] += step * layer.getDropout()[tid][j];  // accumulate the partial derivatives
                 }
             }
         }
@@ -230,12 +246,6 @@ public class NeuralNetwork {
 
             for (int j = 0; j < layer.getSize(); j++) {
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
-                    if(random.nextDouble() < dropout){
-                        for (int tid = 0; tid < threads; tid++) {
-                            previousLayer.getWeightsStepAccumulator2()[tid][j][i] = 0;
-                        }
-                        continue;
-                    }
                     // the big sum
                     // read-only so no mutex needed
                     double step = 0;
@@ -279,7 +289,7 @@ public class NeuralNetwork {
         customThreadPool.submit(() -> {
             IntStream.range(0, p).parallel().forEach(k -> {
                 int tid = threadId.get();
-                forward(data.getTestVectors().get(k));
+                forward(data.getTestVectors().get(k), tid);
                 double max = -Double.MAX_VALUE;
                 int result = 0;
                 double errorAccumulator = 0;
@@ -310,12 +320,13 @@ public class NeuralNetwork {
 
         final int p2 = data.getTrainVectors().size();
         customThreadPool.submit(() -> IntStream.range(0, p2).parallel().forEach(k -> {
-            forward(data.getTrainVectors().get(k));
+            int tid = threadId.get();
+            forward(data.getTrainVectors().get(k), tid);
             double max = -Double.MAX_VALUE;
             int result = 0;
             double errorAccumulator = 0;
             for (int j = 0; j < outputLayer.getSize(); j++) {
-                double predicted = outputLayer.getOutputs()[threadId.get()][j + 1];
+                double predicted = outputLayer.getOutputs()[tid][j + 1];
                 int truth = data.getTrainLabels().get(k).get(j);
                 if (predicted > max) {
                     max = predicted;
@@ -347,12 +358,13 @@ public class NeuralNetwork {
 
         customThreadPool.submit(() -> {
             IntStream.range(0, p).parallel().forEach(k -> {
-                forward(data.getTestVectors().get(k));
+                int tid = threadId.get();
+                forward(data.getTestVectors().get(k), tid);
                 Layer outputLayer = layers.get(layers.size() - 1);
                 double max = -Double.MAX_VALUE;
                 int result = 0;
                 for (int j = 0; j < outputLayer.getSize(); j++) {
-                    double predicted = outputLayer.getOutputs()[threadId.get()][j + 1];
+                    double predicted = outputLayer.getOutputs()[tid][j + 1];
                     if (predicted > max) {
                         max = predicted;
                         result = j;

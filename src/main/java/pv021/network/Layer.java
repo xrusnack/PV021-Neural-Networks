@@ -25,12 +25,15 @@ public class Layer {
     private final double[][] rmsprop;
     private final int size;
 
+    private final double[][] dropout;
+
     public Layer(int size, int nextLayerSize, ActivationFunction activationFunction, boolean input) {
         this.nextLayerSize = nextLayerSize;
         this.activationFunction = activationFunction;
         this.size = size;
 
         this.outputs = new double[NeuralNetwork.threads][size + 1];
+        this.dropout = new double[NeuralNetwork.threads][size];
         this.potentials = input ? null : new double[NeuralNetwork.threads][size];
         chainRuleTermWithOutput = new double[NeuralNetwork.threads][size];
 
@@ -85,6 +88,10 @@ public class Layer {
         double[][] tst = new double[4][4];
         tst[0][3] = 3;
         System.err.println(tst[0][3]);
+    }
+
+    public double[][] getDropout() {
+        return dropout;
     }
 
     public double[][] getMomentum() {
