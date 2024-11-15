@@ -43,6 +43,7 @@ public class NeuralNetwork {
     private final double momentumAlpha;
     private final double rmsAlpha;
     private final double decay;
+    private final double dropout;
     private final ErrorFunction errorFunction = new CrossEntropy();
 
     public static int threads = Runtime.getRuntime().availableProcessors();
@@ -52,7 +53,7 @@ public class NeuralNetwork {
 
     public NeuralNetwork(Data data, List<LayerTemp> tempLayers,
                          double learningRate, long seed, int steps, int batchSkip, double momentumAlpha, int evaluationStep,
-                         double rmsAlpha, double decay) {
+                         double rmsAlpha, double decay, double dropout) {
         this.data = data;
         this.layers = new ArrayList<>();
         this.learningRate = learningRate;
@@ -63,6 +64,7 @@ public class NeuralNetwork {
         this.evaluationStep = evaluationStep;
         this.rmsAlpha = rmsAlpha;
         this.decay = decay;
+        this.dropout = dropout;
         initLayers(tempLayers);
     }
 
@@ -98,7 +100,7 @@ public class NeuralNetwork {
         List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList()); // choose a minibatch
 
         for (int t = 0; t < steps; t++) {
-            if (t % evaluationStep == 0) {
+            if (t % evaluationStep == 0 && t != 0) {
                 printError(t);
             }
             Collections.shuffle(batches, random);
@@ -114,7 +116,10 @@ public class NeuralNetwork {
                     Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0),
                     Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));*/
         }
-        printError(steps);
+
+        if(steps >= evaluationStep) {
+            printError(steps);
+        }
     }
 
     public <T extends Number> void forward(List<Double> input) {
@@ -225,6 +230,9 @@ public class NeuralNetwork {
 
             for (int j = 0; j < layer.getSize(); j++) {
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
+                    if(random.nextDouble() < dropout){
+                        continue;
+                    }
                     // the big sum
                     // read-only so no mutex needed
                     double step = 0;

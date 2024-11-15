@@ -16,14 +16,15 @@ public class Main {
         NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data,
                 0.0025,
                 5000,
-                256,
+                1024,
                 0.8,
                 0.8,
                 42,
                 0,
-                10)
-                .addLayer(4096, new ReLuFunction())
-                //.addLayer(128, new ReLuFunction())
+                50,
+                0.15)
+                //.addLayer(4096, new ReLuFunction())
+                .addLayer(128, new ReLuFunction())
                 .build(new SoftMaxFunction());
 
         System.out.println("Training...");
