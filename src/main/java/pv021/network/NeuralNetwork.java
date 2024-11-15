@@ -99,7 +99,7 @@ public class NeuralNetwork {
 
         for (int t = 0; t < steps; t++) {
             if (t % evaluationStep == 0) {
-                printError();
+                printError(t);
             }
             Collections.shuffle(batches, random);
             customThreadPool.submit(() -> batches.subList(0, batchSize).parallelStream().forEach(k -> {
@@ -114,7 +114,7 @@ public class NeuralNetwork {
                     Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0),
                     Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));*/
         }
-        printError();
+        printError(steps);
     }
 
     public <T extends Number> void forward(List<Double> input) {
@@ -257,7 +257,7 @@ public class NeuralNetwork {
     }
 
 
-    private void printError() throws Exception {
+    private void printError(int step) throws Exception {
         Layer outputLayer = layers.get(layers.size() - 1);
 
         AtomicReference<Double> errorTestRef = new AtomicReference<>(0.0);
@@ -298,7 +298,7 @@ public class NeuralNetwork {
         correct.set(0);
 
         final int p2 = data.getTrainVectors().size();
-        customThreadPool.submit(() -> IntStream.range(0, p).parallel().forEach(k -> {
+        customThreadPool.submit(() -> IntStream.range(0, p2).parallel().forEach(k -> {
             forward(data.getTrainVectors().get(k));
             double max = -Double.MAX_VALUE;
             int result = 0;
@@ -325,7 +325,7 @@ public class NeuralNetwork {
         double errorTest = errorTestRef.get();
 
         double accuracyTrain = (correct.get() * 100.0) / total.get();
-        System.out.printf("test: [loss: %.6f accuracy: %.2f%%] train: [loss: %.6f accuracy: %.2f%%] overfit: %.6f / %.2f%%%n", errorTest, accuracyTest, errorTrain, accuracyTrain, -errorTrain + errorTest, accuracyTrain - accuracyTest);
+        System.out.printf("Step %d: Test: [loss: %.6f accuracy: %.2f%%] Train: [loss: %.6f accuracy: %.2f%%] Overfit: %.6f / %.2f%%%n", step, errorTest, accuracyTest, errorTrain, accuracyTrain, -errorTrain + errorTest, accuracyTrain - accuracyTest);
     }
 
     public void evaluate(String fileName) throws Exception {
