@@ -14,7 +14,7 @@ public class Main {
         System.out.println("Initialising Neural Network...");
         NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data,
                 0.00184,
-                100,
+                1060,
                 2048,
                 0.35,
                 0.9,

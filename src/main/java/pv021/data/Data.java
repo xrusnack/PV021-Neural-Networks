@@ -11,7 +11,6 @@ import java.util.List;
 /**
  * The class represents a dataset containing training and testing vectors and labels.
  */
-
 public class Data {
     private final List<List<Double>> trainVectors;
     private final List<List<Double>> testVectors;

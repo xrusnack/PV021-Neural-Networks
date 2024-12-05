@@ -8,6 +8,9 @@ import pv021.network.NeuralNetwork;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A builder class for constructing a NeuralNetwork.
+ */
 public class NeuralNetworkBuilder {
     private final List<LayerTemplate> layers;
     private final Data data;

@@ -1,7 +1,6 @@
 package pv021.function.activation;
 
 public class ReLuFunction extends ActivationFunction {
-
     @Override
     public double computeOutput(double sum, double potential, double max) {
         return apply(potential, max);
