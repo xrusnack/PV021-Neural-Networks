@@ -38,7 +38,7 @@ public class NeuralNetwork {
     private final double rmsAlpha;
     private final ErrorFunction errorFunction = new CrossEntropy();
 
-    public static int threads = Runtime.getRuntime().availableProcessors();
+    public static int threads = 16; //Runtime.getRuntime().availableProcessors();
     private final ThreadLocal<Integer> threadId = ThreadLocal.withInitial(() -> (int) (Thread.currentThread().getId() % threads));
     private final ForkJoinPool customThreadPool = new ForkJoinPool(threads);
 
