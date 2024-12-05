@@ -18,8 +18,6 @@ public class Layer {
 
     private final double[][] chainRuleTermWithOutput;
 
-
-    private final Object weightsStepAccumulatorMutex = new Object();
     private final double[][][] weightsStepAccumulator;
     private final double[][] momentum;
     private final double[][] rmsprop;
@@ -73,18 +71,8 @@ public class Layer {
         return weightsStepAccumulator;
     }
 
-    public Object getWeightsStepAccumulatorMutex() {
-        return weightsStepAccumulatorMutex;
-    }
-
     public double[][] getChainRuleTermWithOutput() {
         return chainRuleTermWithOutput;
-    }
-
-    public static void main(String[] args) {
-        double[][] tst = new double[4][4];
-        tst[0][3] = 3;
-        System.err.println(tst[0][3]);
     }
 
     public double[][] getMomentum() {
