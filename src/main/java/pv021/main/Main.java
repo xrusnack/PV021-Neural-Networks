@@ -12,20 +12,18 @@ public class Main {
         Data data = new Data("data/fashion_mnist", 10);
 
         System.out.println("Initialising Neural Network...");
-
         NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data,
                 0.00184,
                 100,
                 2048,
                 0.35,
                 0.9,
-                42,
-                1000)
+                42)
                 .addLayer(128, new ReLuFunction())
                 .build(new SoftMaxFunction());
 
         System.out.println("Training...");
-        neuralNetwork.stochasticGradientDescent();
+        neuralNetwork.train();
 
         // evaluate and save test results
         neuralNetwork.evaluate("predictions.csv");

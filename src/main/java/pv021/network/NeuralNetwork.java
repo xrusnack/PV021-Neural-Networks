@@ -43,10 +43,9 @@ public class NeuralNetwork {
     public static int threads = Runtime.getRuntime().availableProcessors();
     private final ThreadLocal<Integer> threadId = ThreadLocal.withInitial(() -> (int) (Thread.currentThread().getId() % threads));
     private final ForkJoinPool customThreadPool = new ForkJoinPool(threads);
-    private final int evaluationStep;
 
-    public NeuralNetwork(Data data, List<LayerTemplate> tempLayers, double learningRate, long seed, int steps, int batchSkip,
-                         double momentumAlpha, int evaluationStep, double rmsAlpha) {
+    public NeuralNetwork(Data data, List<LayerTemplate> tempLayers, double learningRate, long seed, int steps,
+                         int batchSkip, double momentumAlpha, double rmsAlpha) {
         this.data = data;
         this.layers = new ArrayList<>();
         this.learningRate = learningRate;
@@ -54,7 +53,6 @@ public class NeuralNetwork {
         this.steps = steps;
         this.batch = batchSkip;
         this.momentumAlpha = momentumAlpha;
-        this.evaluationStep = evaluationStep;
         this.rmsAlpha = rmsAlpha;
         initLayers(tempLayers);
     }
@@ -68,10 +66,10 @@ public class NeuralNetwork {
                     layerTemplateNext == null ? 0 : layerTemplateNext.getSize(),
                     layerTemplate.getActivationFunction(), i == 0));
         }
-        initializeWeights();  // the Normal He-initialization
+        initializeWeights();
     }
 
-    public void initializeWeights() {
+    public void initializeWeights() {  // the Normal He-initialization
         int n = data.getTrainVectors().get(0).size();
 
         for (Layer layer : layers) {
@@ -85,31 +83,22 @@ public class NeuralNetwork {
         }
     }
 
-    public void stochasticGradientDescent() throws Exception {
+    public void train() throws Exception {  // Stochastic Gradient Descent
         int p = data.getTrainVectors().size();  // number of training examples
         int batchSize = Math.min(p, batch);
-        List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList()); // choose a minibatch
+        List<Integer> batches = IntStream.rangeClosed(0, p - 1).boxed().collect(Collectors.toList());
 
         for (int t = 0; t < steps; t++) {
-            if (t % evaluationStep == 0 && t != 0) {
-                printError(t);
-            }
-            Collections.shuffle(batches, random);
+            Collections.shuffle(batches, random);  // random choice of the minibatch
             customThreadPool.submit(() -> batches.subList(0, batchSize).parallelStream().forEach(k -> {
                 int tid = (int) (Thread.currentThread().getId() % threads);
+
                 forward(data.getTrainVectors().get(k), tid);
                 backpropagate(k, errorFunction, tid);
                 computeGradient(tid);
+
             })).get();
             updateWeights();
-            //System.err.println(t);
-            /*System.err.println(t + " | max = %f min = %f".formatted(
-                    Arrays.stream(layers.get(layers.size() - 1).getPotentials()).max().orElse(0),
-                    Arrays.stream(layers.get(layers.size() - 1).getPotentials()).min().orElse(0)));*/
-        }
-
-        if (steps >= evaluationStep) {
-            printError(steps);
         }
     }
 
@@ -121,7 +110,7 @@ public class NeuralNetwork {
             inputLayer.getOutputs()[tid][i + 1] = input.get(i);
         }
 
-        for (int l = 1; l < layers.size(); l++) {  // forward pass in the hidden layers
+        for (int l = 1; l < layers.size(); l++) {
             Layer previousLayer = layers.get(l - 1);
             Layer layer = layers.get(l);
 
@@ -129,14 +118,11 @@ public class NeuralNetwork {
                 double potential = 0;
 
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
-                    double w = previousLayer.getWeights()[j][i];
-                    double o = previousLayer.getOutputs()[tid][i];
-                    potential += w * o;
+                    potential += previousLayer.getWeights()[j][i] * previousLayer.getOutputs()[tid][i];
                 }
-
                 layer.getPotentials()[tid][j] = potential;
-
             }
+
             double max = Arrays.stream(layer.getPotentials()[tid]).max().orElse(0);
 
             // calculate sum of activation functions applied to potentials (for the output layer with softmax) - optimisation
@@ -145,10 +131,9 @@ public class NeuralNetwork {
                 sum += layer.getActivationFunction().apply(layer.getPotentials()[tid][j], max);
             }
 
-            // calculate outputs for each neuron in the layer
-            for (int j = 0; j < layer.getSize(); j++) {
+            for (int j = 0; j < layer.getSize(); j++) {  // calculate outputs for each neuron in the layer
                 layer.getOutputs()[tid][j + 1] = layer.getActivationFunction()
-                        .computeOutput(sum, layer.getPotentials()[tid][j], max);/* * layer.getDropout()[tid][j]; */
+                        .computeOutput(sum, layer.getPotentials()[tid][j], max);
             }
         }
     }
@@ -253,78 +238,6 @@ public class NeuralNetwork {
         }
     }
 
-
-    private void printError(int step) throws Exception {
-        Layer outputLayer = layers.get(layers.size() - 1);
-
-        AtomicReference<Double> errorTestRef = new AtomicReference<>(0.0);
-        final AtomicInteger total = new AtomicInteger(0);
-        final AtomicInteger correct = new AtomicInteger(0);
-
-        final int p = data.getTestVectors().size();
-        customThreadPool.submit(() -> {
-            IntStream.range(0, p).parallel().forEach(k -> {
-                int tid = threadId.get();
-                forward(data.getTestVectors().get(k), tid);
-                double max = -Double.MAX_VALUE;
-                int result = 0;
-                double errorAccumulator = 0;
-                for (int j = 0; j < outputLayer.getSize(); j++) {
-                    double predicted = outputLayer.getOutputs()[tid][j + 1];
-                    int truth = data.getTestLabels().get(k).get(j);
-                    if (predicted > max) {
-                        max = predicted;
-                        result = j;
-                    }
-
-                    errorAccumulator -= (truth * Math.log(predicted) + (1 - truth) * Math.log(1 - predicted)) / p;
-                }
-                double finalErrorAccumulator = errorAccumulator;
-                errorTestRef.updateAndGet(v -> v + finalErrorAccumulator);
-                total.incrementAndGet();
-                if (data.getTestLabels().get(k).get(result) == 1) {
-                    correct.incrementAndGet();
-                }
-            });
-        }).get();
-
-        double accuracyTest = (correct.get() * 100.0) / total.get();
-
-        AtomicReference<Double> errorTrainRef = new AtomicReference<>(0.0);
-        total.set(0);
-        correct.set(0);
-
-        final int p2 = data.getTrainVectors().size();
-        customThreadPool.submit(() -> IntStream.range(0, p2).parallel().forEach(k -> {
-            int tid = threadId.get();
-            forward(data.getTrainVectors().get(k), tid);
-            double max = -Double.MAX_VALUE;
-            int result = 0;
-            double errorAccumulator = 0;
-            for (int j = 0; j < outputLayer.getSize(); j++) {
-                double predicted = outputLayer.getOutputs()[tid][j + 1];
-                int truth = data.getTrainLabels().get(k).get(j);
-                if (predicted > max) {
-                    max = predicted;
-                    result = j;
-                }
-
-                errorAccumulator -= (truth * Math.log(predicted) + (1 - truth) * Math.log(1 - predicted)) / p2;
-            }
-            double finalErrorAccumulator = errorAccumulator;
-            errorTrainRef.updateAndGet(v -> v + finalErrorAccumulator);
-            total.incrementAndGet();
-            if (data.getTrainLabels().get(k).get(result) == 1) {
-                correct.incrementAndGet();
-            }
-        })).get();
-
-        double errorTrain = errorTrainRef.get();
-        double errorTest = errorTestRef.get();
-
-        double accuracyTrain = (correct.get() * 100.0) / total.get();
-        System.out.printf("Step %d: Test: [loss: %.6f accuracy: %.2f%%] Train: [loss: %.6f accuracy: %.2f%%] Overfit: %.6f / %.2f%%%n", step, errorTest, accuracyTest, errorTrain, accuracyTrain, -errorTrain + errorTest, accuracyTrain - accuracyTest);
-    }
 
     public void evaluate(String fileName) throws Exception {
         System.out.println("==============");
