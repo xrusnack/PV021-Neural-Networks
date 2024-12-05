@@ -39,7 +39,6 @@ public class NeuralNetwork {
     private final double momentumAlpha;
     private final double rmsAlpha;
     private final double decay;
-    private final double dropout;
     private final ErrorFunction errorFunction = new CrossEntropy();
 
     public static int threads = Runtime.getRuntime().availableProcessors();
@@ -47,9 +46,8 @@ public class NeuralNetwork {
     private final ForkJoinPool customThreadPool = new ForkJoinPool(threads);
     private final int evaluationStep;
 
-    public NeuralNetwork(Data data, List<LayerTemp> tempLayers,
-                         double learningRate, long seed, int steps, int batchSkip, double momentumAlpha, int evaluationStep,
-                         double rmsAlpha, double decay, double dropout) {
+    public NeuralNetwork(Data data, List<LayerTemp> tempLayers, double learningRate, long seed, int steps, int batchSkip,
+                         double momentumAlpha, int evaluationStep, double rmsAlpha, double decay) {
         this.data = data;
         this.layers = new ArrayList<>();
         this.learningRate = learningRate;
@@ -60,7 +58,6 @@ public class NeuralNetwork {
         this.evaluationStep = evaluationStep;
         this.rmsAlpha = rmsAlpha;
         this.decay = decay;
-        this.dropout = dropout;
         initLayers(tempLayers);
     }
 
@@ -213,13 +210,13 @@ public class NeuralNetwork {
                     double term3 = previousLayer.getOutputs()[tid][i];
                     double res = t12 * term3;
 
-                    previousLayer.getWeightsStepAccumulator2()[tid][j][i] += res;/* * layer.getDropout()[tid][j]; */  // accumulate the partial derivatives
+                    previousLayer.getWeightsStepAccumulator2()[tid][j][i] += res; // accumulate the partial derivatives
                 }
             }
         }
     }
 
-    private void updateWeights() {  // update the weights + optimize with momentum and RMSProp
+    private void updateWeights() {  // update the weights + optimize with momentum and RMSProp (Adam)
         double delta = 1e-8;  // smoothing term to avoid division by zero
 
         for (int l = 1; l < layers.size(); l++) {
