@@ -21,7 +21,6 @@ public class Main {
                 0.8,
                 0.8,
                 42,
-                0,
                 100)
                 .addLayer(256, new ReLuFunction())
                 .addLayer(256, new TanHFunction())

@@ -38,7 +38,6 @@ public class NeuralNetwork {
     private final int batch;
     private final double momentumAlpha;
     private final double rmsAlpha;
-    private final double decay;
     private final ErrorFunction errorFunction = new CrossEntropy();
 
     public static int threads = Runtime.getRuntime().availableProcessors();
@@ -47,7 +46,7 @@ public class NeuralNetwork {
     private final int evaluationStep;
 
     public NeuralNetwork(Data data, List<LayerTemp> tempLayers, double learningRate, long seed, int steps, int batchSkip,
-                         double momentumAlpha, int evaluationStep, double rmsAlpha, double decay) {
+                         double momentumAlpha, int evaluationStep, double rmsAlpha) {
         this.data = data;
         this.layers = new ArrayList<>();
         this.learningRate = learningRate;
@@ -57,7 +56,6 @@ public class NeuralNetwork {
         this.momentumAlpha = momentumAlpha;
         this.evaluationStep = evaluationStep;
         this.rmsAlpha = rmsAlpha;
-        this.decay = decay;
         initLayers(tempLayers);
     }
 
@@ -243,7 +241,6 @@ public class NeuralNetwork {
 
                     double momentumBalancedStep = actualStep * (1 - momentumAlpha) + momentumAlpha * previousStep;
 
-                    previousLayer.getWeights()[j][i] *= (1 - decay);
                     previousLayer.getWeights()[j][i] += momentumBalancedStep;
                     previousLayer.getRmsprop()[j][i] = currentRmsProp;
                     previousLayer.getMomentum()[j][i] = momentumBalancedStep;
