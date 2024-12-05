@@ -2,11 +2,11 @@ package pv021.network.builder;
 
 import pv021.function.activation.ActivationFunction;
 
-public class LayerTemp {
+public class LayerTemplate {
     private final int size;
     private final ActivationFunction activationFunction;
 
-    public LayerTemp(int size, ActivationFunction activationFunction) {
+    public LayerTemplate(int size, ActivationFunction activationFunction) {
         this.size = size;
         this.activationFunction = activationFunction;
     }

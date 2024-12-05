@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NeuralNetworkBuilder {
-    private final List<LayerTemp> layers;
+    private final List<LayerTemplate> layers;
     private final Data data;
     private final double learningRate;
     private final int steps;
@@ -27,19 +27,19 @@ public class NeuralNetworkBuilder {
         this.learningRate = learningRate;
         this.batchSkip = batchSize;
         this.momentumAlpha = momentumAlpha;
-        this.layers.add(new LayerTemp(data.getTestVectors().get(0).size(), new IdentityFunction()));
+        this.layers.add(new LayerTemplate(data.getTestVectors().get(0).size(), new IdentityFunction()));
         this.seed = seed;
         this.evaluationStep = evaluationStep;
         this.rmsAlpha=rmsAlpha;
     }
 
     public NeuralNetworkBuilder addLayer(int n, ActivationFunction activationFunction) {
-        layers.add(new LayerTemp(n, activationFunction));
+        layers.add(new LayerTemplate(n, activationFunction));
         return this;
     }
 
     public NeuralNetwork build(ActivationFunction activationFunction) {
-        layers.add(new LayerTemp(data.getLabelCount(), activationFunction));
+        layers.add(new LayerTemplate(data.getLabelCount(), activationFunction));
         return new NeuralNetwork(data, layers, learningRate, seed, steps, batchSkip,
                 momentumAlpha, evaluationStep, rmsAlpha);
     }

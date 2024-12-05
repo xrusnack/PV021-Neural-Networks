@@ -3,7 +3,7 @@ package pv021.network;
 import pv021.data.Data;
 import pv021.function.error.CrossEntropy;
 import pv021.function.error.ErrorFunction;
-import pv021.network.builder.LayerTemp;
+import pv021.network.builder.LayerTemplate;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -45,7 +45,7 @@ public class NeuralNetwork {
     private final ForkJoinPool customThreadPool = new ForkJoinPool(threads);
     private final int evaluationStep;
 
-    public NeuralNetwork(Data data, List<LayerTemp> tempLayers, double learningRate, long seed, int steps, int batchSkip,
+    public NeuralNetwork(Data data, List<LayerTemplate> tempLayers, double learningRate, long seed, int steps, int batchSkip,
                          double momentumAlpha, int evaluationStep, double rmsAlpha) {
         this.data = data;
         this.layers = new ArrayList<>();
@@ -59,16 +59,16 @@ public class NeuralNetwork {
         initLayers(tempLayers);
     }
 
-    private void initLayers(List<LayerTemp> tempLayers) {
-        for (int i = 0; i < tempLayers.size(); i++) {
-            LayerTemp layerTemp = tempLayers.get(i);
-            LayerTemp layerTempNext = i == tempLayers.size() - 1 ? null : tempLayers.get(i + 1);
+    private void initLayers(List<LayerTemplate> templateLayers) {
+        for (int i = 0; i < templateLayers.size(); i++) {
+            LayerTemplate layerTemplate = templateLayers.get(i);
+            LayerTemplate layerTemplateNext = i == templateLayers.size() - 1 ? null : templateLayers.get(i + 1);
             layers.add(new Layer(
-                    layerTemp.getSize(),
-                    layerTempNext == null ? 0 : layerTempNext.getSize(),
-                    layerTemp.getActivationFunction(), i == 0));
+                    layerTemplate.getSize(),
+                    layerTemplateNext == null ? 0 : layerTemplateNext.getSize(),
+                    layerTemplate.getActivationFunction(), i == 0));
         }
-        initializeWeights();  // we use the Normal He-initialization
+        initializeWeights();  // the Normal He-initialization
     }
 
     public void initializeWeights() {
