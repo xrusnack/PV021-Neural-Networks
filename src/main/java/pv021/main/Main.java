@@ -27,6 +27,7 @@ public class Main {
         neuralNetwork.train();
 
         // evaluate and save test results
-        neuralNetwork.evaluate("predictions.csv");
+        neuralNetwork.evaluate("train_predictions.csv", true);
+        neuralNetwork.evaluate("test_predictions.csv", false);
     }
 }

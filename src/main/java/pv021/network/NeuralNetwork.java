@@ -239,16 +239,19 @@ public class NeuralNetwork {
     }
 
 
-    public void evaluate(String fileName) throws Exception {
+    public void evaluate(String fileName, boolean trainData) throws Exception {
         System.out.println("==============");
+
+        List<List<Double>> dataset = trainData ? data.getTrainVectors() : data.getTestVectors();
+
         File csvOutputFile = new File(fileName);
-        int p = data.getTestVectors().size();
+        int p = dataset.size();
         int[] results = new int[p];
 
         customThreadPool.submit(() -> {
             IntStream.range(0, p).parallel().forEach(k -> {
                 int tid = threadId.get();
-                forward(data.getTestVectors().get(k), tid);
+                forward(dataset.get(k), tid);
                 Layer outputLayer = layers.get(layers.size() - 1);
                 double max = -Double.MAX_VALUE;
                 int result = 0;
