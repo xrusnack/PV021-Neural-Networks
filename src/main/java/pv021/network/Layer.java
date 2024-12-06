@@ -67,7 +67,7 @@ public class Layer {
         return weights;
     }
 
-    public double[][][] getWeightsStepAccumulator2() {
+    public double[][][] getWeightsStepAccumulator() {
         return weightsStepAccumulator;
     }
 

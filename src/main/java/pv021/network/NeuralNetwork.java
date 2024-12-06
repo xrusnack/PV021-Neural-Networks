@@ -191,7 +191,7 @@ public class NeuralNetwork {
                     double term3 = previousLayer.getOutputs()[tid][i];
                     double res = t12 * term3;
 
-                    previousLayer.getWeightsStepAccumulator2()[tid][j][i] += res; // accumulate the partial derivatives
+                    previousLayer.getWeightsStepAccumulator()[tid][j][i] += res; // accumulate the partial derivatives
                 }
             }
         }
@@ -210,7 +210,7 @@ public class NeuralNetwork {
                     // read-only so no mutex needed
                     double step = 0;
                     for (int tid = 0; tid < threads; tid++) {
-                        step += previousLayer.getWeightsStepAccumulator2()[tid][j][i];
+                        step += previousLayer.getWeightsStepAccumulator()[tid][j][i];
                     }
 
                     // r_ji^(t - 1)
@@ -229,7 +229,7 @@ public class NeuralNetwork {
                     previousLayer.getMomentum()[j][i] = momentumBalancedStep;
 
                     for (int tid = 0; tid < threads; tid++) {
-                        previousLayer.getWeightsStepAccumulator2()[tid][j][i] = 0;
+                        previousLayer.getWeightsStepAccumulator()[tid][j][i] = 0;
                     }
                 }
             }
