@@ -23,17 +23,17 @@ public class Layer {
     private final double[][] rmsprop;
     private final int size;
 
-    public Layer(int size, int nextLayerSize, ActivationFunction activationFunction, boolean input) {
+    public Layer(int size, int nextLayerSize, ActivationFunction activationFunction, boolean input, int threads) {
         this.nextLayerSize = nextLayerSize;
         this.activationFunction = activationFunction;
         this.size = size;
 
-        this.outputs = new double[NeuralNetwork.threads][size + 1];
-        this.potentials = input ? null : new double[NeuralNetwork.threads][size];
-        chainRuleTermWithOutput = new double[NeuralNetwork.threads][size];
+        this.outputs = new double[threads][size + 1];
+        this.potentials = input ? null : new double[threads][size];
+        chainRuleTermWithOutput = new double[threads][size];
 
         // size + 1 to include bias
-        this.weightsStepAccumulator = nextLayerSize > 0 ? new double[NeuralNetwork.threads][nextLayerSize][size + 1] : null;
+        this.weightsStepAccumulator = nextLayerSize > 0 ? new double[threads][nextLayerSize][size + 1] : null;
         this.momentum = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
         this.weights = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;
         this.rmsprop = nextLayerSize > 0 ? new double[nextLayerSize][size + 1] : null;

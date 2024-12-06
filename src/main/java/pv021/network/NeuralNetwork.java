@@ -38,12 +38,12 @@ public class NeuralNetwork {
     private final double rmsAlpha;
     private final ErrorFunction errorFunction = new CrossEntropy();
 
-    public static int threads = 16; //Runtime.getRuntime().availableProcessors();
-    private final ThreadLocal<Integer> threadId = ThreadLocal.withInitial(() -> (int) (Thread.currentThread().getId() % threads));
-    private final ForkJoinPool customThreadPool = new ForkJoinPool(threads);
+    private final int threads;
+    private final ThreadLocal<Integer> threadId;
+    private final ForkJoinPool customThreadPool;
 
     public NeuralNetwork(Data data, List<LayerTemplate> tempLayers, double learningRate, long seed, int steps,
-                         int batchSkip, double momentumAlpha, double rmsAlpha) {
+                         int batchSkip, double momentumAlpha, double rmsAlpha, int threads) {
         this.data = data;
         this.layers = new ArrayList<>();
         this.learningRate = learningRate;
@@ -52,6 +52,9 @@ public class NeuralNetwork {
         this.batch = batchSkip;
         this.momentumAlpha = momentumAlpha;
         this.rmsAlpha = rmsAlpha;
+        this.threads = threads;
+        threadId = ThreadLocal.withInitial(() -> (int) (Thread.currentThread().getId() % threads));
+        customThreadPool = new ForkJoinPool(threads);
         initLayers(tempLayers);
     }
 
@@ -62,7 +65,7 @@ public class NeuralNetwork {
             layers.add(new Layer(
                     layerTemplate.getSize(),
                     layerTemplateNext == null ? 0 : layerTemplateNext.getSize(),
-                    layerTemplate.getActivationFunction(), i == 0));
+                    layerTemplate.getActivationFunction(), i == 0, threads));
         }
         initializeWeights();
     }
@@ -206,8 +209,7 @@ public class NeuralNetwork {
 
             for (int j = 0; j < layer.getSize(); j++) {
                 for (int i = 0; i < previousLayer.getSize() + 1; i++) {
-                    // the big sum
-                    // read-only so no mutex needed
+                    // total sum of weight steps for each weight
                     double step = 0;
                     for (int tid = 0; tid < threads; tid++) {
                         step += previousLayer.getWeightsStepAccumulator()[tid][j][i];
