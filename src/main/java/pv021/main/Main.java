@@ -14,11 +14,11 @@ public class Main {
         System.out.println("Initialising Neural Network...");
         NeuralNetwork neuralNetwork = new NeuralNetworkBuilder(data,
                 0.00184,
-                1060,
+                1440,
                 2048,
                 0.35,
                 0.9,
-                42)
+                1)
                 .addLayer(128, new ReLuFunction())
                 .build(new SoftMaxFunction());
 
