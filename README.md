@@ -1,4 +1,8 @@
 524798, 525276 (Jakub Španger, Karolína Rusnačková)
+
+Achieved accuracy: 90.01%
+
+# The Assignemnt
 ## PV021 project -- Deep Learning from Scratch
 
 ### DEADLINE
@@ -142,7 +146,3 @@ are four data files included:
 **A:** Yes, but it might be much harder.
 
 Best luck with the project!
-
-Tomáš Foltýnek
-4374@mail.muni.cz
-PV021 Neural Networks
