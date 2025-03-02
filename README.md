@@ -1,6 +1,6 @@
 524798, 525276 (Jakub Španger, Karolína Rusnačková)
 
-Achieved accuracy: 90.01%
+Achieved accuracy: 90.09%
 
 # The Assignemnt
 ## PV021 project -- Deep Learning from Scratch
