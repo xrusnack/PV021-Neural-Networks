@@ -2,7 +2,7 @@
 
 Achieved accuracy: 90.09%
 
-# The Assignemnt
+# The Assignment
 ## PV021 project -- Deep Learning from Scratch
 
 ### DEADLINE
